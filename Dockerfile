@@ -29,6 +29,11 @@ COPY data/malaria.db ./data/malaria.db
 # and config.PROJECT_ROOT points at /app (its data/ dir is where the geocode cache is written).
 RUN uv sync --frozen --no-dev
 
+# Runtime-written geocode cache. Defaulted to a path meant for a mounted volume, so attaching
+# a Railway volume at /app/var persists it across deploys with no extra config. Without a
+# volume this is ephemeral, which is harmless (the cache rebuilds from GeoNames on demand).
+ENV GEOCODE_CACHE_PATH=/app/var/geocode_cache.sqlite
+
 # Railway injects $PORT; default for local `docker run`.
 ENV PORT=8765
 EXPOSE 8765

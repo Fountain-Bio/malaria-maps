@@ -152,9 +152,12 @@ Operational notes:
 - **Weekly refresh:** `.github/workflows/weekly-collect.yml` runs the collector on a Monday
   cron, checkpoints the WAL, and commits `data/malaria.db` only when it changed. That commit
   is the deploy trigger once the repo is connected to Railway.
-- **Geocode cache:** `data/geocode_cache.sqlite` is written at runtime and is ephemeral on
-  Railway, rebuilt from GeoNames on demand. Mount a small volume at `/app/data` if you want
-  it to persist across deploys and save GeoNames credits.
+- **Geocode cache:** `data/geocode_cache.sqlite` is written at runtime. The image defaults it
+  to `/app/var/geocode_cache.sqlite` (`GEOCODE_CACHE_PATH`), so attaching a Railway volume at
+  `/app/var` persists it across deploys and saves GeoNames credits, with no extra config.
+  Without a volume it's ephemeral and rebuilds from GeoNames on demand. Do not mount the
+  volume at `/app/data`: that path holds the baked, immutable `malaria.db` and the volume
+  would shadow it. Keep the service at one replica.
 
 Build and check it locally:
 

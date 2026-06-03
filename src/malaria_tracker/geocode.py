@@ -3,8 +3,8 @@
 Free web service, authenticated by username only, CC BY (attribute GeoNames). To stay
 well under the 10,000/day + 1,000/hour credit limits:
   - country-name searches never reach GeoNames (resolved client-side in the UI);
-  - repeat lookups are served from an on-disk cache (data/geocode_cache.sqlite, its own
-    file so it never contends with the read-only malaria.db);
+  - repeat lookups are served from an on-disk cache (data/geocode_cache.sqlite by default,
+    or $GEOCODE_CACHE_PATH; its own file so it never contends with the read-only malaria.db);
   - the SRTM elevation call (0.2 credit) is made only when the resolved country has an
     elevation-dependent rule, decided by the caller via locate.needs_elevation().
 """
@@ -12,19 +12,24 @@ well under the 10,000/day + 1,000/hour credit limits:
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 import unicodedata
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
+from pathlib import Path
 
 import httpx
 
 from .config import PROJECT_ROOT, geonames_username
 
 BASE = "http://api.geonames.org"
-CACHE_PATH = PROJECT_ROOT / "data" / "geocode_cache.sqlite"
+# Overridable so a deploy can point the runtime-written cache at a writable volume (e.g. a
+# Railway volume mounted at /app/var) while the baked, immutable malaria.db stays in the image.
+_DEFAULT_CACHE_PATH = PROJECT_ROOT / "data" / "geocode_cache.sqlite"
+CACHE_PATH = Path(os.environ.get("GEOCODE_CACHE_PATH", str(_DEFAULT_CACHE_PATH)))
 _UNKNOWN_ELEV = -32768
 _cache_lock = threading.Lock()
 _cache_ready = False
