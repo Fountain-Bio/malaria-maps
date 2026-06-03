@@ -60,11 +60,13 @@ CREATE TABLE IF NOT EXISTS raw_payload (
 CREATE TABLE IF NOT EXISTS country (
   country_id          INTEGER PRIMARY KEY,
   iso3                TEXT,                    -- ISO-3166 alpha-3, nullable until mapped
+  iso2                TEXT,                    -- ISO-3166 alpha-2 (GeoNames join key)
   display_name        TEXT NOT NULL,
   is_subnational_only INTEGER NOT NULL DEFAULT 0,
   created_at          TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_country_iso3 ON country(iso3);
+CREATE INDEX IF NOT EXISTS ix_country_iso2 ON country(iso2);
 
 -- Maps each source's native key(s) to our country_id; isolates CDC id/slug drift.
 CREATE TABLE IF NOT EXISTS country_alias (
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS cdc_iso3 (
   friendly_name TEXT PRIMARY KEY,             -- CDC FriendlyName (slug)
   cdc_name      TEXT,
   iso3          TEXT,                          -- territory's own ISO3 (nullable for unmapped entities)
+  iso2          TEXT,                          -- territory's own ISO2 (GeoNames join key)
   note          TEXT
 );
 
@@ -221,7 +224,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS malaria_fts USING fts5(
 -- Current malaria state, one row per country.
 CREATE VIEW IF NOT EXISTS v_malaria_current AS
 SELECT
-  c.country_id, c.iso3, c.display_name,
+  c.country_id, c.iso3, c.iso2, c.display_name,
   mr.has_transmission, mr.is_endemic, mr.whole_country_endemic,
   mr.country_has_any_prophylaxis_area, mr.screening_class,
   mr.area_summary, mr.species_json, mr.prophylaxis_drugs_json, mr.chloroquine_resistant,
@@ -233,7 +236,7 @@ WHERE mr.is_current = 1;
 
 -- Compact current-state feed for the choropleth map (one row per country with ISO3).
 CREATE VIEW IF NOT EXISTS country_current AS
-SELECT c.iso3, c.display_name,
+SELECT c.iso3, c.iso2, c.display_name,
        mr.is_endemic, mr.screening_class, mr.area_summary, mr.cdc_updated_date
 FROM malaria_record mr
 JOIN country c USING (country_id)

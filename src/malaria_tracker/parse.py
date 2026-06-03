@@ -130,7 +130,10 @@ def parse_area_statements(area_fragment: str | None) -> list[AreaStatement]:
         else:
             polarity, tier = "include", "prophylaxis"
 
-        scope = "all" if re.match(r"^(all\b|throughout\b)", low) else "area"
+        # "All areas <2,500 m" / "Throughout the country" = country-wide; but
+        # "All areas in the states of Acre, Amapá…" is region-specific, not country-wide.
+        region_specific = re.search(r"\bstates?\s+of\b|\bin\s+the\s+(state|province|department|region|district)", low)
+        scope = "all" if re.match(r"^(all\b|throughout\b)", low) and not region_specific else "area"
         emax, emin = _elevations(raw)
         season = _season(raw)
 

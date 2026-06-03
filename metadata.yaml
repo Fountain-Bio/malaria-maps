@@ -3,7 +3,9 @@ description_html: |
   <p>Malaria endemic-region data for US blood-donor geographic deferral screening, built
   entirely from public-domain CDC primary data (CDC Travelers' Health). A place is
   <em>malaria-endemic</em> for deferral exactly where CDC recommends antimalarial
-  chemoprophylaxis (FDA guidance, 12/2022). Data is versioned (SCD2) with a change feed.</p>
+  chemoprophylaxis (FDA guidance, 12/2022). Data is versioned (SCD2) with a change feed.
+  The map includes a city search (<code>/-/locate?q=</code>) that geocodes a place and
+  returns its residence and travel deferral verdicts.</p>
   <p><strong><a href="/web/index.html">&#127758; Open the world map &rarr;</a></strong>
   &nbsp;|&nbsp; <a href="/malaria/v_malaria_current">Current state</a>
   &nbsp;|&nbsp; <a href="/malaria/change_event">Change feed</a></p>

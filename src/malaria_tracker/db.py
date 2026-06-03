@@ -56,18 +56,21 @@ def load_cdc_iso3(conn: sqlite3.Connection, rows: list[dict[str, Any]]) -> int:
     n = 0
     for r in rows:
         conn.execute(
-            "INSERT INTO cdc_iso3(friendly_name, cdc_name, iso3, note) VALUES (?,?,?,?) "
+            "INSERT INTO cdc_iso3(friendly_name, cdc_name, iso3, iso2, note) VALUES (?,?,?,?,?) "
             "ON CONFLICT(friendly_name) DO UPDATE SET cdc_name=excluded.cdc_name, "
-            "iso3=excluded.iso3, note=excluded.note",
-            (r["friendly_name"], r.get("cdc_name"), r.get("iso3") or None, r.get("note")),
+            "iso3=excluded.iso3, iso2=excluded.iso2, note=excluded.note",
+            (r["friendly_name"], r.get("cdc_name"), r.get("iso3") or None,
+             r.get("iso2") or None, r.get("note")),
         )
         n += 1
     return n
 
 
-def iso3_for_slug(conn: sqlite3.Connection, slug: str) -> str | None:
-    row = conn.execute("SELECT iso3 FROM cdc_iso3 WHERE friendly_name = ?", (slug,)).fetchone()
-    return row["iso3"] if row and row["iso3"] else None
+def codes_for_slug(conn: sqlite3.Connection, slug: str) -> tuple[str | None, str | None]:
+    row = conn.execute("SELECT iso3, iso2 FROM cdc_iso3 WHERE friendly_name = ?", (slug,)).fetchone()
+    if not row:
+        return None, None
+    return (row["iso3"] or None), (row["iso2"] or None)
 
 
 # --------------------------------------------------------------------------- country resolution
@@ -90,10 +93,10 @@ def resolve_or_create_country(
             _touch_aliases(conn, source_id_, cid, fetch_run_id)
             return cid, False
 
-    iso3 = iso3_for_slug(conn, slug)
+    iso3, iso2 = codes_for_slug(conn, slug)
     cur = conn.execute(
-        "INSERT INTO country(iso3, display_name, created_at) VALUES (?,?,?)",
-        (iso3, name, now),
+        "INSERT INTO country(iso3, iso2, display_name, created_at) VALUES (?,?,?,?)",
+        (iso3, iso2, name, now),
     )
     cid = int(cur.lastrowid)
     for kind, key in (("cdc_destination_id", str(destination_id)), ("cdc_slug", slug),

@@ -82,13 +82,14 @@ def _seed_crosswalk(conn: db.sqlite3.Connection) -> None:
     with path.open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     db.load_cdc_iso3(conn, rows)
-    # Backfill ISO3 onto existing country rows.
+    # Backfill ISO3 / ISO2 onto existing country rows.
     for r in rows:
         if r.get("iso3"):
             conn.execute(
-                "UPDATE country SET iso3=? WHERE iso3 IS NULL AND country_id IN "
-                "(SELECT country_id FROM country_alias WHERE native_kind='cdc_slug' AND native_key=?)",
-                (r["iso3"], r["friendly_name"]),
+                "UPDATE country SET iso3=COALESCE(iso3, ?), iso2=COALESCE(iso2, ?) "
+                "WHERE country_id IN (SELECT country_id FROM country_alias "
+                "WHERE native_kind='cdc_slug' AND native_key=?)",
+                (r["iso3"], r.get("iso2"), r["friendly_name"]),
             )
 
 

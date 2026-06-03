@@ -40,6 +40,31 @@ OVERRIDES = {
     "british-virgin-islands": "VGB", "usvirgin-islands": "VIR", "wake-island": "UMI",
 }
 
+# ISO-3166 alpha-2 for the same override entities (GeoNames returns alpha-2).
+OVERRIDES_ISO2 = {
+    "american-samoa": "AS", "andorra": "AD", "anguilla": "AI", "antigua-and-barbuda": "AG",
+    "aruba": "AW", "azores": "PT", "bahrain": "BH", "barbados": "BB", "bermuda": "BM",
+    "bonaire": "BQ", "british-indian-ocean-territory": "IO", "burma": "MM",
+    "canary-islands": "ES", "cape-verde": "CV", "cayman-islands": "KY",
+    "christmas-island": "CX", "cocos-islands": "CC", "comoros": "KM", "cook-islands": "CK",
+    "curacao": "CW", "dominica": "DM", "easter-island": "CL", "faroe-island": "FO",
+    "french-guiana": "GF", "french-polynesia": "PF", "gibraltar": "GI", "grenada": "GD",
+    "guadeloupe": "GP", "guam": "GU", "hong-kong-sar": "HK", "kiribati": "KI",
+    "kosovo": "XK", "liechtenstein": "LI", "macau-sar": "MO", "madeira-islands": "PT",
+    "maldives": "MV", "malta": "MT", "marshall-islands": "MH", "martinique": "MQ",
+    "mauritius": "MU", "mayotte": "YT", "micronesia": "FM", "monaco": "MC",
+    "montserrat": "MS", "nauru": "NR", "niue": "NU", "norfolk-island": "NF",
+    "northern-mariana-islands": "MP", "palau": "PW", "pitcairn-islands": "PN",
+    "reunion": "RE", "saba": "BQ", "saint-barthelemy": "BL", "saint-helena": "SH",
+    "st-kitts-and-nevis": "KN", "saint-lucia": "LC", "saint-martin": "MF",
+    "saint-pierre-and-miquelon": "PM", "saint-vincent-and-the-grenadines": "VC",
+    "samoa": "WS", "san-marino": "SM", "seychelles": "SC", "singapore": "SG",
+    "sint-eustatius": "BQ", "sint-maarten": "SX",
+    "south-georgia-south-sandwich-islands": "GS", "sao-tome-and-principe": "ST",
+    "tokelau": "TK", "tonga": "TO", "turks-and-caicos": "TC", "tuvalu": "TV",
+    "british-virgin-islands": "VG", "usvirgin-islands": "VI", "wake-island": "UM",
+}
+
 
 def norm(s: str | None) -> str:
     if not s:
@@ -53,20 +78,23 @@ def norm(s: str | None) -> str:
     return " ".join(s.split())
 
 
-def geojson_lookup() -> dict[str, str]:
+def geojson_lookup() -> dict[str, tuple[str, str]]:
     g = json.loads((ROOT / "web" / "world.geojson").read_text())
-    lookup: dict[str, str] = {}
+    lookup: dict[str, tuple[str, str]] = {}
     for f in g["features"]:
         p = f["properties"]
-        iso = p.get("ISO_A3")
-        if not iso or iso == "-99":
-            iso = p.get("ISO_A3_EH")
-        if not iso or iso == "-99":
+        iso3 = p.get("ISO_A3")
+        if not iso3 or iso3 == "-99":
+            iso3 = p.get("ISO_A3_EH")
+        if not iso3 or iso3 == "-99":
             continue
+        iso2 = p.get("ISO_A2")
+        if not iso2 or iso2 == "-99":
+            iso2 = p.get("ISO_A2_EH") or ""
         for key in ("ADMIN", "NAME", "NAME_LONG", "BRK_NAME", "NAME_SORT", "FORMAL_EN", "GEOUNIT"):
             v = p.get(key)
             if v:
-                lookup.setdefault(norm(v), iso)
+                lookup.setdefault(norm(v), (iso3, iso2))
     return lookup
 
 
@@ -85,22 +113,28 @@ def main() -> None:
     for r in rows:
         name, slug = r["display_name"], r["slug"]
         if slug in OVERRIDES:
-            iso, note = OVERRIDES[slug], "override"
+            iso3, iso2, note = OVERRIDES[slug], OVERRIDES_ISO2.get(slug, ""), "override"
         else:
-            iso = lookup.get(norm(name)) or lookup.get(norm(slug.replace("-", " ")))
-            note = "geojson" if iso else "UNMATCHED"
-        if not iso:
+            hit = lookup.get(norm(name)) or lookup.get(norm(slug.replace("-", " ")))
+            iso3, iso2 = (hit[0], hit[1]) if hit else ("", "")
+            note = "geojson" if iso3 else "UNMATCHED"
+        if not iso3:
             unmatched.append(slug)
-        out.append({"friendly_name": slug, "cdc_name": name, "iso3": iso or "", "note": note})
+        out.append({"friendly_name": slug, "cdc_name": name, "iso3": iso3,
+                    "iso2": iso2, "note": note})
 
     dst = ROOT / "reference" / "country_iso3.csv"
     with dst.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=["friendly_name", "cdc_name", "iso3", "note"])
+        w = csv.DictWriter(fh, fieldnames=["friendly_name", "cdc_name", "iso3", "iso2", "note"])
         w.writeheader()
         w.writerows(out)
-    print(f"wrote {dst} ({len(out)} rows, {len(unmatched)} unmatched)")
+    missing_iso2 = [r["friendly_name"] for r in out if r["iso3"] and not r["iso2"]]
+    print(f"wrote {dst} ({len(out)} rows, {len(unmatched)} unmatched iso3, "
+          f"{len(missing_iso2)} missing iso2)")
     if unmatched:
-        print("UNMATCHED:", unmatched)
+        print("UNMATCHED iso3:", unmatched)
+    if missing_iso2:
+        print("MISSING iso2:", missing_iso2)
 
 
 if __name__ == "__main__":

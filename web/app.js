@@ -1,7 +1,12 @@
-/* Malaria Region Tracker — choropleth. Joins Natural Earth polygons to the
-   /malaria/country_current feed; click a country for full detail from v_malaria_current. */
+/* Malaria Region Tracker — choropleth + city/country lookup, one unified detail panel. */
 
 const COLORS = { whole_country: "#cb181d", partial: "#fd8d3c", none: "#dfe3e8" };
+const CITATION = "FDA 12/2022; endemic = where CDC recommends chemoprophylaxis. " +
+  "A Jan-2025 FDA draft would move to selective testing.";
+
+let countryRows = [];   // /malaria/country_current rows (iso3, iso2, display_name, screening_class, ...)
+let geoFeatures = [];   // Natural Earth features (for country fly-to)
+let cityMarker = null;
 
 const map = new maplibregl.Map({
   container: "map",
@@ -16,15 +21,21 @@ function isoOf(p) {
   return eh && eh !== "-99" ? eh : p.ISO_A3;
 }
 
+function fold(s) {
+  return (s || "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 map.on("load", async () => {
   const [geo, rows] = await Promise.all([
     fetch("world.geojson").then((r) => r.json()),
     fetch("/malaria/country_current.json?_shape=array&_size=max").then((r) => r.json()),
   ]);
+  countryRows = rows;
+  geoFeatures = geo.features;
 
   const byIso = {};
   for (const r of rows) if (r.iso3) byIso[r.iso3] = r;
-
   for (const f of geo.features) {
     const rec = byIso[isoOf(f.properties)];
     f.properties._class = rec ? rec.screening_class : "none";
@@ -64,14 +75,76 @@ function labelFor(c) {
     : c === "partial" ? "Endemic — specific areas" : "Not endemic for deferral";
 }
 
-async function openCountry(p) {
-  const panel = document.getElementById("panel");
-  const body = document.getElementById("panel-body");
-  const iso = p._iso;
-  body.innerHTML = `<h2>${p._name}</h2> <span class="badge b-${badge(p._class)}">${labelFor(p._class)}</span>`;
-  body.innerHTML += implicationHtml(p._class);
-  panel.classList.add("open");
+// ----------------------------------------------------------------- unified panel
+function residenceBadge(defer) {
+  return defer ? ["v-defer", "Residence: defer"] : ["v-ok", "Residence: eligible"];
+}
+function travelBadge(t) {
+  if (t === "yes") return ["v-defer", "Travel: defer"];
+  if (t === "areas") return ["v-review", "Travel: defer in listed areas"];
+  if (t === "uncertain") return ["v-review", "Travel: review needed"];
+  return ["v-ok", "Travel: not deferred"];
+}
+function field(k, html) {
+  return `<div class="field"><div class="k">${k}</div><div class="v">${html}</div></div>`;
+}
 
+function renderPanel(d) {
+  const body = document.getElementById("panel-body");
+  document.getElementById("panel").classList.add("open");
+  const [rcls, rlabel] = residenceBadge(d.residence);
+  const [tcls, tlabel] = travelBadge(d.travel);
+
+  let h = `<h2>${d.title}</h2>`;
+  h += `<div class="verdict-row"><span class="vbadge ${rcls}">${rlabel}</span>` +
+    `<span class="vbadge ${tcls}">${tlabel}</span></div>`;
+  const meta = [];
+  if (d.confidence) meta.push(`confidence: ${d.confidence}`);
+  if (d.elevation != null) meta.push(`${d.elevation} m`);
+  if (meta.length) h += `<div class="conf">${meta.join(" · ")}</div>`;
+  if (d.why) h += field(d.scope === "city" ? "Why" : "Deferral implication", d.why);
+  if (d.season) h += field("Seasonal", d.season);
+  if (d.area_html) h += field("Risk areas (CDC, verbatim)", d.area_html);
+  if (d.prophylaxis_html) h += field("Recommended chemoprophylaxis", d.prophylaxis_html);
+  if (d.species_html) h += field("Species", d.species_html);
+  if (d.chloroquine != null) h += field("Chloroquine resistance", d.chloroquine ? "Yes" : "None reported");
+  h += field("Basis", CITATION);
+  if (d.alternates && d.alternates.length) {
+    h += `<div class="field"><div class="k">Did you mean</div><div class="chips">` +
+      d.alternates.map((a) =>
+        `<span class="chip" data-gid="${a.geoname_id}">${a.name}, ${a.admin1 || a.country_name}</span>`
+      ).join("") + `</div></div>`;
+  }
+  const links = [];
+  if (d.iso2) links.push(`<a href="/malaria/v_malaria_current?iso2=${d.iso2}">Full record</a>`);
+  if (d.display_name) links.push(`<a href="/malaria/country_history?country=${encodeURIComponent(d.display_name)}">History</a>`);
+  if (links.length) h += `<div class="links">${links.join("")}</div>`;
+  if (d.updated) h += `<div class="updated">CDC updated ${d.updated}</div>`;
+  if (d.scope === "city") h += `<div class="geo-credit">Geocoding: GeoNames (CC BY)</div>`;
+
+  body.innerHTML = h;
+  body.querySelectorAll(".chip").forEach((c) =>
+    c.addEventListener("click", () => locateCity({ geonameId: c.dataset.gid })));
+}
+
+function implicationText(cls) {
+  if (cls === "whole_country") {
+    return "<ul><li><b>Residence</b> &gt;5 yr: defer (whole country).</li>" +
+      "<li><b>Travel</b> &gt;24 h anywhere in country: defer (3-month window).</li></ul>";
+  }
+  if (cls === "partial") {
+    return "<ul><li><b>Residence</b> &gt;5 yr: defer (whole country — it contains a malaria-endemic area).</li>" +
+      "<li><b>Travel</b>: defer only for the chemoprophylaxis-recommended areas listed below (3-month window).</li></ul>";
+  }
+  return "<ul><li>Not endemic for deferral: CDC recommends no chemoprophylaxis here, " +
+    "so neither residence nor travel triggers malaria deferral.</li></ul>";
+}
+
+// ----------------------------------------------------------------- country panel
+async function openCountry(p) {
+  const iso = p._iso;
+  document.getElementById("panel").classList.add("open");
+  document.getElementById("panel-body").innerHTML = `<div class="field"><div class="v">Loading…</div></div>`;
   let rec = null;
   if (iso) {
     const rows = await fetch(`/malaria/v_malaria_current.json?_shape=array&iso3=${encodeURIComponent(iso)}`)
@@ -79,55 +152,107 @@ async function openCountry(p) {
     rec = rows && rows[0];
   }
   if (!rec) {
-    body.innerHTML += `<div class="field"><div class="v">No CDC malaria record for this area
-      (not a CDC travel destination, or no transmission).</div></div>`;
+    renderPanel({ scope: "country", title: p._name || "Country", residence: false, travel: "no",
+                  why: "No CDC malaria record for this area (not a CDC travel destination)." });
     return;
   }
-
-  body.innerHTML += [
-    field("Risk areas (CDC, verbatim)", rec.area_of_risk_html || "—"),
-    field("Recommended chemoprophylaxis", rec.recommended_prophylaxis_html || "—"),
-    field("Species", rec.species_html || "—"),
-    field("Chloroquine resistance",
-      rec.chloroquine_resistant === 1 ? "Yes" : rec.chloroquine_resistant === 0 ? "None reported" : "—"),
-    `<div class="links">
-       <a href="/malaria/v_malaria_current?iso3=${encodeURIComponent(iso)}">Full record</a>
-       <a href="/malaria/country_history?country=${encodeURIComponent(rec.display_name)}">History</a>
-     </div>`,
-    rec.cdc_updated_date ? `<div class="updated">CDC updated ${rec.cdc_updated_date}</div>` : "",
-  ].join("");
+  renderPanel({
+    scope: "country", title: rec.display_name, residence: !!rec.is_endemic,
+    travel: rec.screening_class === "whole_country" ? "yes"
+          : rec.screening_class === "partial" ? "areas" : "no",
+    why: implicationText(rec.screening_class),
+    area_html: rec.area_of_risk_html, prophylaxis_html: rec.recommended_prophylaxis_html,
+    species_html: rec.species_html, chloroquine: rec.chloroquine_resistant,
+    updated: rec.cdc_updated_date, iso2: rec.iso2, display_name: rec.display_name,
+  });
 }
 
-function field(k, html) {
-  return `<div class="field"><div class="k">${k}</div><div class="v">${html}</div></div>`;
-}
-function badge(c) { return c === "whole_country" ? "whole" : c === "partial" ? "partial" : "none"; }
-
-// --- FDA deferral implication, derived from screening_class ---
-function implicationHtml(cls) {
-  let lines;
-  if (cls === "whole_country") {
-    lines = [
-      "<b>Residence</b> &gt;5 yr in this country: defer &mdash; whole country.",
-      "<b>Travel</b> &gt;24 h to anywhere in this country: defer (3-month window).",
-    ];
-  } else if (cls === "partial") {
-    lines = [
-      "<b>Residence</b> &gt;5 yr in this country: defer &mdash; whole country (it contains a malaria-endemic area).",
-      "<b>Travel</b> &gt;24 h to the chemoprophylaxis-recommended areas listed below: defer (3-month window).",
-    ];
+// ----------------------------------------------------------------- search (country or city)
+document.getElementById("search").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = document.getElementById("city-input").value.trim();
+  if (!q) return;
+  const country = findCountry(q);
+  if (country) {
+    if (cityMarker) { cityMarker.remove(); cityMarker = null; }
+    openCountry({ _iso: country.iso3, _name: country.display_name, _class: country.screening_class });
+    flyToIso3(country.iso3);
   } else {
-    lines = [
-      "Not endemic for deferral: CDC recommends no chemoprophylaxis here, so malaria residence/travel deferral does not apply under current criteria.",
-    ];
+    locateCity({ q });
   }
-  return `<div class="field implic"><div class="k">Deferral implication (FDA 12/2022)</div>
-    <div class="v"><ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>
-      <div class="implic-note">Pending FDA Jan-2025 draft would move to selective donor testing.</div>
-    </div></div>`;
+});
+
+function findCountry(q) {
+  const f = fold(q);
+  if (f.length < 3) return null;
+  const exact = countryRows.find((r) => fold(r.display_name) === f);
+  if (exact) return exact;
+  const pre = countryRows.filter((r) => fold(r.display_name).startsWith(f));
+  if (pre.length === 1) return pre[0];
+  const con = countryRows.filter((r) => fold(r.display_name).includes(f));
+  if (con.length === 1) return con[0];
+  return null;
 }
 
-// --- Global "Screening rules" drawer ---
+function countryCentroid(iso3) {
+  const f = geoFeatures.find((x) => isoOf(x.properties) === iso3);
+  if (!f) return null;
+  let minx = 180, miny = 90, maxx = -180, maxy = -90;
+  const walk = (c) => {
+    if (typeof c[0] === "number") {
+      minx = Math.min(minx, c[0]); maxx = Math.max(maxx, c[0]);
+      miny = Math.min(miny, c[1]); maxy = Math.max(maxy, c[1]);
+    } else { c.forEach(walk); }
+  };
+  walk(f.geometry.coordinates);
+  return [(minx + maxx) / 2, (miny + maxy) / 2];
+}
+function flyToIso3(iso3) {
+  const c = countryCentroid(iso3);
+  if (c) map.flyTo({ center: c, zoom: 3.2, speed: 1.2 });
+}
+
+async function locateCity(params) {
+  document.getElementById("panel").classList.add("open");
+  document.getElementById("panel-body").innerHTML = `<div class="field"><div class="v">Searching…</div></div>`;
+  const qs = params.geonameId
+    ? `geonameId=${encodeURIComponent(params.geonameId)}`
+    : `q=${encodeURIComponent(params.q)}`;
+  let v;
+  try {
+    v = await fetch(`/-/locate?${qs}`).then((r) => r.json());
+  } catch (_e) {
+    document.getElementById("panel-body").innerHTML = `<div class="field"><div class="v">Lookup failed.</div></div>`;
+    return;
+  }
+  if (v.error && !v.resolved) {
+    document.getElementById("panel-body").innerHTML = `<div class="field"><div class="v">${v.error}</div></div>`;
+    return;
+  }
+  renderVerdict(v);
+}
+
+function renderVerdict(v) {
+  const r = v.resolved || {};
+  const where = [r.name, r.admin1, r.country_name].filter(Boolean).join(", ");
+  renderPanel({
+    scope: "city", title: where || "Location",
+    residence: v.residence_deferral, travel: v.travel_deferral,
+    confidence: v.confidence, elevation: r.elevation_m,
+    why: v.travel_reason, season: v.season_note,
+    area_html: v.verbatim_area_html, prophylaxis_html: v.prophylaxis_html,
+    species_html: v.species_html, chloroquine: v.chloroquine_resistant,
+    updated: v.cdc_updated_date, iso2: r.country_iso2, display_name: v.display_name,
+    alternates: v.alternates,
+  });
+  if (r.lat != null && r.lng != null) {
+    if (cityMarker) cityMarker.remove();
+    cityMarker = new maplibregl.Marker({ color: "#1b6ec2" }).setLngLat([r.lng, r.lat]).addTo(map);
+    map.flyTo({ center: [r.lng, r.lat], zoom: 5, speed: 1.2 });
+  }
+}
+
+// ----------------------------------------------------------------- screening rules drawer
 const RULE_TITLES = {
   endemic_definition: "Endemic definition",
   residence_over_5yr: "Residence (>5 years)",
@@ -139,8 +264,7 @@ const RULE_TITLES = {
 let rulesLoaded = false;
 
 async function openRules() {
-  const drawer = document.getElementById("rules");
-  drawer.classList.add("open");
+  document.getElementById("rules").classList.add("open");
   if (rulesLoaded) return;
   const body = document.getElementById("rules-body");
   const rules = await fetch("/malaria/deferral_rule.json?_shape=array")

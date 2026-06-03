@@ -46,16 +46,20 @@ CDC JSON endpoint ──> collect ──> versioned SQLite (data/malaria.db) ─
 ## Quickstart
 
 ```bash
-uv sync                                   # install deps
-uv run python -m malaria_tracker.collect  # fetch CDC -> versioned SQLite (idempotent)
-uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --port 8765
+uv sync                                       # install deps
+echo 'GEONAMES_USERNAME=your_geonames_user' > .env   # free GeoNames account, for city lookup
+uv run python -m malaria_tracker.collect      # fetch CDC -> versioned SQLite (idempotent)
+uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --plugins-dir plugins --port 8765
 ```
 
 Then open:
 
-- **Map:** http://127.0.0.1:8765/web/index.html (red = whole-country endemic, amber =
-  endemic in specific areas, grey = not endemic; click a country for detail + history)
+- **Map:** http://127.0.0.1:8765/web/index.html — red = whole-country endemic, amber =
+  endemic in specific areas, grey = not endemic. Click a country for detail + history, or use
+  the **search box** to check whether a specific city is in a deferral geography.
 - **Datasette home:** http://127.0.0.1:8765/malaria
+
+City lookup also works from the terminal: `uv run python -m malaria_tracker.locate "Nairobi"`.
 
 Run the collector daily (manual, or a local cron entry). It is idempotent: a second run the
 same day with an unchanged payload writes nothing.
@@ -75,8 +79,19 @@ Every table, view, and canned query is available as JSON by appending `.json`
 | Country version history | `/malaria/country_history.json?country=Afghanistan&_shape=array` |
 | Full-text area search | `/malaria/search_areas.json?q=gold+mining&_shape=array` |
 | Collection provenance | `/malaria/fetch_run.json?_shape=array` |
+| City deferral lookup | `/-/locate?q=Nairobi` (or `?geonameId=<id>`) |
 
 Datasette also gives faceted browse, FTS, and a read-only SQL box for ad-hoc queries.
+
+### City lookup (`/-/locate`)
+
+A Datasette plugin (`plugins/locate_endpoint.py`) geocodes a place via GeoNames (server-side,
+username from `.env`), maps it to its country, and returns a residence verdict and a travel
+verdict with the CDC basis. Residence is country-level (any city in a country with an endemic
+area defers a >5-year resident); travel is decided against the parsed sub-national areas. When
+a city in an endemic country can't be placed confidently, travel is reported as `uncertain`
+(never a false "not deferred"), and the verbatim CDC text is always returned. Geocoding by
+GeoNames (CC BY).
 
 ## Data model
 

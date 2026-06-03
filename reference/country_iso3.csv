@@ -1,245 +1,245 @@
-friendly_name,cdc_name,iso3,note
-afghanistan,Afghanistan,AFG,geojson
-albania,Albania,ALB,geojson
-algeria,Algeria,DZA,geojson
-american-samoa,American Samoa  (U.S.),ASM,override
-andorra,Andorra,AND,override
-angola,Angola,AGO,geojson
-anguilla,Anguilla (U.K.),AIA,override
-antarctica,Antarctica,ATA,geojson
-antigua-and-barbuda,Antigua and Barbuda,ATG,override
-argentina,Argentina,ARG,geojson
-armenia,Armenia,ARM,geojson
-aruba,Aruba (Netherlands),ABW,override
-australia,Australia,AUS,geojson
-austria,Austria,AUT,geojson
-azerbaijan,Azerbaijan,AZE,geojson
-azores,Azores (Portugal),PRT,override
-bahrain,Bahrain,BHR,override
-bangladesh,Bangladesh,BGD,geojson
-barbados,Barbados,BRB,override
-belarus,Belarus,BLR,geojson
-belgium,Belgium,BEL,geojson
-belize,Belize,BLZ,geojson
-benin,Benin,BEN,geojson
-bermuda,Bermuda (U.K.),BMU,override
-bhutan,Bhutan,BTN,geojson
-bolivia,Bolivia,BOL,geojson
-bonaire,Bonaire (Netherlands),BES,override
-bosnia-and-herzegovina,Bosnia and Herzegovina,BIH,geojson
-botswana,Botswana,BWA,geojson
-brazil,Brazil,BRA,geojson
-british-indian-ocean-territory,British Indian Ocean Territory; includes Diego Garcia (U.K.),IOT,override
-british-virgin-islands,"Virgin Islands, British",VGB,override
-brunei,Brunei,BRN,geojson
-bulgaria,Bulgaria,BGR,geojson
-burkina-faso,Burkina Faso,BFA,geojson
-burma,Burma (Myanmar),MMR,override
-burundi,Burundi,BDI,geojson
-cambodia,Cambodia,KHM,geojson
-cameroon,Cameroon,CMR,geojson
-canada,Canada,CAN,geojson
-canary-islands,Canary Islands ( Spain ),ESP,override
-cape-verde,Cape Verde,CPV,override
-cayman-islands,Cayman Islands (U.K.),CYM,override
-central-african-republic,Central African Republic,CAF,geojson
-chad,Chad,TCD,geojson
-chile,Chile,CHL,geojson
-china,China,CHN,geojson
-christmas-island,Christmas Island (Australia),CXR,override
-cocos-islands,Cocos (Keeling) Islands (Australia),CCK,override
-colombia,Colombia,COL,geojson
-comoros,Comoros,COM,override
-congo,"Congo, Republic of the (Congo-Brazzaville)",COG,geojson
-cook-islands,Cook Islands (New Zealand),COK,override
-costa-rica,Costa Rica,CRI,geojson
-croatia,Croatia,HRV,geojson
-cuba,Cuba,CUB,geojson
-curacao,Curaçao (Netherlands),CUW,override
-cyprus,Cyprus,CYP,geojson
-czechia,Czechia (Czech Republic),CZE,geojson
-democratic-republic-of-congo,Democratic Republic of the Congo (Congo-Kinshasa),COD,geojson
-denmark,Denmark,DNK,geojson
-djibouti,Djibouti,DJI,geojson
-dominica,Dominica,DMA,override
-dominican-republic,Dominican Republic,DOM,geojson
-east-timor,Timor-Leste (East Timor),TLS,geojson
-easter-island,Easter Island (Chile),CHL,override
-ecuador,"Ecuador, including the Galápagos Islands",ECU,geojson
-egypt,Egypt,EGY,geojson
-el-salvador,El Salvador,SLV,geojson
-equatorial-guinea,Equatorial Guinea,GNQ,geojson
-eritrea,Eritrea,ERI,geojson
-estonia,Estonia,EST,geojson
-eswatini,Eswatini (Swaziland),SWZ,geojson
-ethiopia,Ethiopia,ETH,geojson
-falkland-islands,"Falkland Islands (Islas Malvinas), UK Overseas Territory (also claimed by Argentina)",FLK,geojson
-faroe-island,Faroe Islands (Denmark),FRO,override
-fiji,Fiji,FJI,geojson
-finland,Finland,FIN,geojson
-france,France,FRA,geojson
-french-guiana,French Guiana,GUF,override
-french-polynesia,"French Polynesia (France), including the Society Islands [Bora-Bora, Moorea & Tahiti]; Marquesas Islands [Hiva Oa & Ua Huka]; and Austral Islands (Tubuai & Rurutu)",PYF,override
-gabon,Gabon,GAB,geojson
-georgia,Georgia,GEO,geojson
-germany,Germany,DEU,geojson
-ghana,Ghana,GHA,geojson
-gibraltar,Gibraltar (U.K.),GIB,override
-greece,Greece,GRC,geojson
-greenland,Greenland (Denmark),GRL,geojson
-grenada,Grenada,GRD,override
-guadeloupe,"Guadeloupe (including Marie-Galante, La Désirade & Îles des Saintes)",GLP,override
-guam,Guam (U.S.),GUM,override
-guatemala,Guatemala,GTM,geojson
-guinea,Guinea,GIN,geojson
-guinea-bissau,Guinea-Bissau,GNB,geojson
-guyana,Guyana,GUY,geojson
-haiti,Haiti,HTI,geojson
-honduras,Honduras,HND,geojson
-hong-kong-sar,Hong Kong (China),HKG,override
-hungary,Hungary,HUN,geojson
-iceland,Iceland,ISL,geojson
-india,India,IND,geojson
-indonesia,Indonesia,IDN,geojson
-iran,Iran,IRN,geojson
-iraq,Iraq,IRQ,geojson
-ireland,Ireland,IRL,geojson
-israel,Israel,ISR,geojson
-italy,Italy (including Holy See [Vatican City]),ITA,geojson
-ivory-coast,Côte d'Ivoire (Ivory Coast),CIV,geojson
-jamaica,Jamaica,JAM,geojson
-japan,Japan,JPN,geojson
-jordan,Jordan,JOR,geojson
-kazakhstan,Kazakhstan,KAZ,geojson
-kenya,Kenya,KEN,geojson
-kiribati,"Kiribati (formerly Gilbert Islands), includes Tarawa, Tabuaeran (Fanning Island), and Banaba (Ocean Island)",KIR,override
-kosovo,Kosovo,XKX,override
-kuwait,Kuwait,KWT,geojson
-kyrgyzstan,Kyrgyzstan,KGZ,geojson
-laos,Laos,LAO,geojson
-latvia,Latvia,LVA,geojson
-lebanon,Lebanon,LBN,geojson
-lesotho,Lesotho,LSO,geojson
-liberia,Liberia,LBR,geojson
-libya,Libya,LBY,geojson
-liechtenstein,Liechtenstein,LIE,override
-lithuania,Lithuania,LTU,geojson
-luxembourg,Luxembourg,LUX,geojson
-macau-sar,Macau (China),MAC,override
-madagascar,Madagascar,MDG,geojson
-madeira-islands,Madeira Islands (Portugal),PRT,override
-malawi,Malawi,MWI,geojson
-malaysia,Malaysia,MYS,geojson
-maldives,Maldives,MDV,override
-mali,Mali,MLI,geojson
-malta,Malta,MLT,override
-marshall-islands,Marshall Islands,MHL,override
-martinique,Martinique,MTQ,override
-mauritania,Mauritania,MRT,geojson
-mauritius,Mauritius,MUS,override
-mayotte,Mayotte (France),MYT,override
-mexico,Mexico,MEX,geojson
-micronesia,"Micronesia, Federated States of (including Chuuk, Kosrae, Pohnpei & Yap)",FSM,override
-moldova,Moldova,MDA,geojson
-monaco,Monaco,MCO,override
-mongolia,Mongolia,MNG,geojson
-montenegro,Montenegro,MNE,geojson
-montserrat,Montserrat (U.K.),MSR,override
-morocco,Morocco,MAR,geojson
-mozambique,Mozambique,MOZ,geojson
-namibia,Namibia,NAM,geojson
-nauru,Nauru,NRU,override
-nepal,Nepal,NPL,geojson
-netherlands,Netherlands,NLD,geojson
-new-caledonia,New Caledonia (France),NCL,geojson
-new-zealand,New Zealand,NZL,geojson
-nicaragua,Nicaragua,NIC,geojson
-niger,Niger,NER,geojson
-nigeria,Nigeria,NGA,geojson
-niue,Niue (New Zealand),NIU,override
-norfolk-island,Norfolk Island (Australia),NFK,override
-north-korea,North Korea,PRK,geojson
-north-macedonia,North Macedonia,MKD,geojson
-northern-mariana-islands,"Northern Mariana Islands (U.S.), includes Saipan, Tinian, and Rota Island",MNP,override
-norway,Norway,NOR,geojson
-oman,Oman,OMN,geojson
-pakistan,Pakistan,PAK,geojson
-palau,Palau,PLW,override
-panama,Panama,PAN,geojson
-papua-new-guinea,Papua New Guinea,PNG,geojson
-paraguay,Paraguay,PRY,geojson
-peru,Peru,PER,geojson
-philippines,Philippines,PHL,geojson
-pitcairn-islands,Pitcairn Islands (U.K.),PCN,override
-poland,Poland,POL,geojson
-portugal,Portugal,PRT,geojson
-puerto-rico,Puerto Rico (U.S.),PRI,geojson
-qatar,Qatar,QAT,geojson
-reunion,Réunion (France),REU,override
-romania,Romania,ROU,geojson
-russia,Russia,RUS,geojson
-rwanda,Rwanda,RWA,geojson
-saba,Saba (Netherlands),BES,override
-saint-barthelemy,Saint Barthelemy (France),BLM,override
-saint-helena,Saint Helena (U.K.),SHN,override
-saint-lucia,Saint Lucia,LCA,override
-saint-martin,Saint Martin (France),MAF,override
-saint-pierre-and-miquelon,Saint Pierre and Miquelon (France),SPM,override
-saint-vincent-and-the-grenadines,Saint Vincent and the Grenadines,VCT,override
-samoa,Samoa (formerly Western Samoa),WSM,override
-san-marino,San Marino,SMR,override
-sao-tome-and-principe,São Tomé and Príncipe,STP,override
-saudi-arabia,Saudi Arabia,SAU,geojson
-senegal,Senegal,SEN,geojson
-serbia,Serbia,SRB,geojson
-seychelles,Seychelles,SYC,override
-sierra-leone,Sierra Leone,SLE,geojson
-singapore,Singapore,SGP,override
-sint-eustatius,Sint Eustatius (Netherlands),BES,override
-sint-maarten,Sint Maarten (Netherlands),SXM,override
-slovakia,Slovakia,SVK,geojson
-slovenia,Slovenia,SVN,geojson
-solomon-islands,Solomon Islands,SLB,geojson
-somalia,Somalia,SOM,geojson
-south-africa,South Africa,ZAF,geojson
-south-georgia-south-sandwich-islands,"South Georgia & the South Sandwich Islands (UK, also claimed by Argentina)",SGS,override
-south-korea,South Korea ,KOR,geojson
-south-sudan,South Sudan,SSD,geojson
-spain,Spain,ESP,geojson
-sri-lanka,Sri Lanka,LKA,geojson
-st-kitts-and-nevis,Saint Kitts (Saint Christopher) & Nevis,KNA,override
-sudan,Sudan,SDN,geojson
-suriname,Suriname,SUR,geojson
-sweden,Sweden,SWE,geojson
-switzerland,Switzerland,CHE,geojson
-syria,Syria,SYR,geojson
-taiwan,Taiwan,TWN,geojson
-tajikistan,Tajikistan,TJK,geojson
-tanzania,Tanzania,TZA,geojson
-thailand,Thailand,THA,geojson
-the-bahamas,"Bahamas, The",BHS,geojson
-the-gambia,"Gambia, The",GMB,geojson
-togo,Togo,TGO,geojson
-tokelau,Tokelau (New Zealand),TKL,override
-tonga,Tonga,TON,override
-trinidad-and-tobago,Trinidad and Tobago,TTO,geojson
-tunisia,Tunisia,TUN,geojson
-turkey,Türkiye (Turkey),TUR,geojson
-turkmenistan,Turkmenistan,TKM,geojson
-turks-and-caicos,Turks and Caicos Islands (U.K.),TCA,override
-tuvalu,Tuvalu,TUV,override
-uganda,Uganda,UGA,geojson
-ukraine,Ukraine,UKR,geojson
-united-arab-emirates,United Arab Emirates,ARE,geojson
-united-kingdom,"United Kingdom (including Channel Islands, Isle of Man, Ascension Island & Tristan Da Cunha Archipelago)",GBR,geojson
-united-states,United States of America,USA,geojson
-uruguay,Uruguay,URY,geojson
-usvirgin-islands,"Virgin Islands, U.S.",VIR,override
-uzbekistan,Uzbekistan,UZB,geojson
-vanuatu,Vanuatu,VUT,geojson
-venezuela,Venezuela,VEN,geojson
-vietnam,Vietnam,VNM,geojson
-wake-island,"Wake Island, U.S.",UMI,override
-yemen,Yemen,YEM,geojson
-zambia,Zambia,ZMB,geojson
-zimbabwe,Zimbabwe,ZWE,geojson
+friendly_name,cdc_name,iso3,iso2,note
+afghanistan,Afghanistan,AFG,AF,geojson
+albania,Albania,ALB,AL,geojson
+algeria,Algeria,DZA,DZ,geojson
+american-samoa,American Samoa  (U.S.),ASM,AS,override
+andorra,Andorra,AND,AD,override
+angola,Angola,AGO,AO,geojson
+anguilla,Anguilla (U.K.),AIA,AI,override
+antarctica,Antarctica,ATA,AQ,geojson
+antigua-and-barbuda,Antigua and Barbuda,ATG,AG,override
+argentina,Argentina,ARG,AR,geojson
+armenia,Armenia,ARM,AM,geojson
+aruba,Aruba (Netherlands),ABW,AW,override
+australia,Australia,AUS,AU,geojson
+austria,Austria,AUT,AT,geojson
+azerbaijan,Azerbaijan,AZE,AZ,geojson
+azores,Azores (Portugal),PRT,PT,override
+bahrain,Bahrain,BHR,BH,override
+bangladesh,Bangladesh,BGD,BD,geojson
+barbados,Barbados,BRB,BB,override
+belarus,Belarus,BLR,BY,geojson
+belgium,Belgium,BEL,BE,geojson
+belize,Belize,BLZ,BZ,geojson
+benin,Benin,BEN,BJ,geojson
+bermuda,Bermuda (U.K.),BMU,BM,override
+bhutan,Bhutan,BTN,BT,geojson
+bolivia,Bolivia,BOL,BO,geojson
+bonaire,Bonaire (Netherlands),BES,BQ,override
+bosnia-and-herzegovina,Bosnia and Herzegovina,BIH,BA,geojson
+botswana,Botswana,BWA,BW,geojson
+brazil,Brazil,BRA,BR,geojson
+british-indian-ocean-territory,British Indian Ocean Territory; includes Diego Garcia (U.K.),IOT,IO,override
+british-virgin-islands,"Virgin Islands, British",VGB,VG,override
+brunei,Brunei,BRN,BN,geojson
+bulgaria,Bulgaria,BGR,BG,geojson
+burkina-faso,Burkina Faso,BFA,BF,geojson
+burma,Burma (Myanmar),MMR,MM,override
+burundi,Burundi,BDI,BI,geojson
+cambodia,Cambodia,KHM,KH,geojson
+cameroon,Cameroon,CMR,CM,geojson
+canada,Canada,CAN,CA,geojson
+canary-islands,Canary Islands ( Spain ),ESP,ES,override
+cape-verde,Cape Verde,CPV,CV,override
+cayman-islands,Cayman Islands (U.K.),CYM,KY,override
+central-african-republic,Central African Republic,CAF,CF,geojson
+chad,Chad,TCD,TD,geojson
+chile,Chile,CHL,CL,geojson
+china,China,CHN,CN,geojson
+christmas-island,Christmas Island (Australia),CXR,CX,override
+cocos-islands,Cocos (Keeling) Islands (Australia),CCK,CC,override
+colombia,Colombia,COL,CO,geojson
+comoros,Comoros,COM,KM,override
+congo,"Congo, Republic of the (Congo-Brazzaville)",COG,CG,geojson
+cook-islands,Cook Islands (New Zealand),COK,CK,override
+costa-rica,Costa Rica,CRI,CR,geojson
+croatia,Croatia,HRV,HR,geojson
+cuba,Cuba,CUB,CU,geojson
+curacao,Curaçao (Netherlands),CUW,CW,override
+cyprus,Cyprus,CYP,CY,geojson
+czechia,Czechia (Czech Republic),CZE,CZ,geojson
+democratic-republic-of-congo,Democratic Republic of the Congo (Congo-Kinshasa),COD,CD,geojson
+denmark,Denmark,DNK,DK,geojson
+djibouti,Djibouti,DJI,DJ,geojson
+dominica,Dominica,DMA,DM,override
+dominican-republic,Dominican Republic,DOM,DO,geojson
+east-timor,Timor-Leste (East Timor),TLS,TL,geojson
+easter-island,Easter Island (Chile),CHL,CL,override
+ecuador,"Ecuador, including the Galápagos Islands",ECU,EC,geojson
+egypt,Egypt,EGY,EG,geojson
+el-salvador,El Salvador,SLV,SV,geojson
+equatorial-guinea,Equatorial Guinea,GNQ,GQ,geojson
+eritrea,Eritrea,ERI,ER,geojson
+estonia,Estonia,EST,EE,geojson
+eswatini,Eswatini (Swaziland),SWZ,SZ,geojson
+ethiopia,Ethiopia,ETH,ET,geojson
+falkland-islands,"Falkland Islands (Islas Malvinas), UK Overseas Territory (also claimed by Argentina)",FLK,FK,geojson
+faroe-island,Faroe Islands (Denmark),FRO,FO,override
+fiji,Fiji,FJI,FJ,geojson
+finland,Finland,FIN,FI,geojson
+france,France,FRA,FR,geojson
+french-guiana,French Guiana,GUF,GF,override
+french-polynesia,"French Polynesia (France), including the Society Islands [Bora-Bora, Moorea & Tahiti]; Marquesas Islands [Hiva Oa & Ua Huka]; and Austral Islands (Tubuai & Rurutu)",PYF,PF,override
+gabon,Gabon,GAB,GA,geojson
+georgia,Georgia,GEO,GE,geojson
+germany,Germany,DEU,DE,geojson
+ghana,Ghana,GHA,GH,geojson
+gibraltar,Gibraltar (U.K.),GIB,GI,override
+greece,Greece,GRC,GR,geojson
+greenland,Greenland (Denmark),GRL,GL,geojson
+grenada,Grenada,GRD,GD,override
+guadeloupe,"Guadeloupe (including Marie-Galante, La Désirade & Îles des Saintes)",GLP,GP,override
+guam,Guam (U.S.),GUM,GU,override
+guatemala,Guatemala,GTM,GT,geojson
+guinea,Guinea,GIN,GN,geojson
+guinea-bissau,Guinea-Bissau,GNB,GW,geojson
+guyana,Guyana,GUY,GY,geojson
+haiti,Haiti,HTI,HT,geojson
+honduras,Honduras,HND,HN,geojson
+hong-kong-sar,Hong Kong (China),HKG,HK,override
+hungary,Hungary,HUN,HU,geojson
+iceland,Iceland,ISL,IS,geojson
+india,India,IND,IN,geojson
+indonesia,Indonesia,IDN,ID,geojson
+iran,Iran,IRN,IR,geojson
+iraq,Iraq,IRQ,IQ,geojson
+ireland,Ireland,IRL,IE,geojson
+israel,Israel,ISR,IL,geojson
+italy,Italy (including Holy See [Vatican City]),ITA,IT,geojson
+ivory-coast,Côte d'Ivoire (Ivory Coast),CIV,CI,geojson
+jamaica,Jamaica,JAM,JM,geojson
+japan,Japan,JPN,JP,geojson
+jordan,Jordan,JOR,JO,geojson
+kazakhstan,Kazakhstan,KAZ,KZ,geojson
+kenya,Kenya,KEN,KE,geojson
+kiribati,"Kiribati (formerly Gilbert Islands), includes Tarawa, Tabuaeran (Fanning Island), and Banaba (Ocean Island)",KIR,KI,override
+kosovo,Kosovo,XKX,XK,override
+kuwait,Kuwait,KWT,KW,geojson
+kyrgyzstan,Kyrgyzstan,KGZ,KG,geojson
+laos,Laos,LAO,LA,geojson
+latvia,Latvia,LVA,LV,geojson
+lebanon,Lebanon,LBN,LB,geojson
+lesotho,Lesotho,LSO,LS,geojson
+liberia,Liberia,LBR,LR,geojson
+libya,Libya,LBY,LY,geojson
+liechtenstein,Liechtenstein,LIE,LI,override
+lithuania,Lithuania,LTU,LT,geojson
+luxembourg,Luxembourg,LUX,LU,geojson
+macau-sar,Macau (China),MAC,MO,override
+madagascar,Madagascar,MDG,MG,geojson
+madeira-islands,Madeira Islands (Portugal),PRT,PT,override
+malawi,Malawi,MWI,MW,geojson
+malaysia,Malaysia,MYS,MY,geojson
+maldives,Maldives,MDV,MV,override
+mali,Mali,MLI,ML,geojson
+malta,Malta,MLT,MT,override
+marshall-islands,Marshall Islands,MHL,MH,override
+martinique,Martinique,MTQ,MQ,override
+mauritania,Mauritania,MRT,MR,geojson
+mauritius,Mauritius,MUS,MU,override
+mayotte,Mayotte (France),MYT,YT,override
+mexico,Mexico,MEX,MX,geojson
+micronesia,"Micronesia, Federated States of (including Chuuk, Kosrae, Pohnpei & Yap)",FSM,FM,override
+moldova,Moldova,MDA,MD,geojson
+monaco,Monaco,MCO,MC,override
+mongolia,Mongolia,MNG,MN,geojson
+montenegro,Montenegro,MNE,ME,geojson
+montserrat,Montserrat (U.K.),MSR,MS,override
+morocco,Morocco,MAR,MA,geojson
+mozambique,Mozambique,MOZ,MZ,geojson
+namibia,Namibia,NAM,NA,geojson
+nauru,Nauru,NRU,NR,override
+nepal,Nepal,NPL,NP,geojson
+netherlands,Netherlands,NLD,NL,geojson
+new-caledonia,New Caledonia (France),NCL,NC,geojson
+new-zealand,New Zealand,NZL,NZ,geojson
+nicaragua,Nicaragua,NIC,NI,geojson
+niger,Niger,NER,NE,geojson
+nigeria,Nigeria,NGA,NG,geojson
+niue,Niue (New Zealand),NIU,NU,override
+norfolk-island,Norfolk Island (Australia),NFK,NF,override
+north-korea,North Korea,PRK,KP,geojson
+north-macedonia,North Macedonia,MKD,MK,geojson
+northern-mariana-islands,"Northern Mariana Islands (U.S.), includes Saipan, Tinian, and Rota Island",MNP,MP,override
+norway,Norway,NOR,NO,geojson
+oman,Oman,OMN,OM,geojson
+pakistan,Pakistan,PAK,PK,geojson
+palau,Palau,PLW,PW,override
+panama,Panama,PAN,PA,geojson
+papua-new-guinea,Papua New Guinea,PNG,PG,geojson
+paraguay,Paraguay,PRY,PY,geojson
+peru,Peru,PER,PE,geojson
+philippines,Philippines,PHL,PH,geojson
+pitcairn-islands,Pitcairn Islands (U.K.),PCN,PN,override
+poland,Poland,POL,PL,geojson
+portugal,Portugal,PRT,PT,geojson
+puerto-rico,Puerto Rico (U.S.),PRI,PR,geojson
+qatar,Qatar,QAT,QA,geojson
+reunion,Réunion (France),REU,RE,override
+romania,Romania,ROU,RO,geojson
+russia,Russia,RUS,RU,geojson
+rwanda,Rwanda,RWA,RW,geojson
+saba,Saba (Netherlands),BES,BQ,override
+saint-barthelemy,Saint Barthelemy (France),BLM,BL,override
+saint-helena,Saint Helena (U.K.),SHN,SH,override
+saint-lucia,Saint Lucia,LCA,LC,override
+saint-martin,Saint Martin (France),MAF,MF,override
+saint-pierre-and-miquelon,Saint Pierre and Miquelon (France),SPM,PM,override
+saint-vincent-and-the-grenadines,Saint Vincent and the Grenadines,VCT,VC,override
+samoa,Samoa (formerly Western Samoa),WSM,WS,override
+san-marino,San Marino,SMR,SM,override
+sao-tome-and-principe,São Tomé and Príncipe,STP,ST,override
+saudi-arabia,Saudi Arabia,SAU,SA,geojson
+senegal,Senegal,SEN,SN,geojson
+serbia,Serbia,SRB,RS,geojson
+seychelles,Seychelles,SYC,SC,override
+sierra-leone,Sierra Leone,SLE,SL,geojson
+singapore,Singapore,SGP,SG,override
+sint-eustatius,Sint Eustatius (Netherlands),BES,BQ,override
+sint-maarten,Sint Maarten (Netherlands),SXM,SX,override
+slovakia,Slovakia,SVK,SK,geojson
+slovenia,Slovenia,SVN,SI,geojson
+solomon-islands,Solomon Islands,SLB,SB,geojson
+somalia,Somalia,SOM,SO,geojson
+south-africa,South Africa,ZAF,ZA,geojson
+south-georgia-south-sandwich-islands,"South Georgia & the South Sandwich Islands (UK, also claimed by Argentina)",SGS,GS,override
+south-korea,South Korea ,KOR,KR,geojson
+south-sudan,South Sudan,SSD,SS,geojson
+spain,Spain,ESP,ES,geojson
+sri-lanka,Sri Lanka,LKA,LK,geojson
+st-kitts-and-nevis,Saint Kitts (Saint Christopher) & Nevis,KNA,KN,override
+sudan,Sudan,SDN,SD,geojson
+suriname,Suriname,SUR,SR,geojson
+sweden,Sweden,SWE,SE,geojson
+switzerland,Switzerland,CHE,CH,geojson
+syria,Syria,SYR,SY,geojson
+taiwan,Taiwan,TWN,CN-TW,geojson
+tajikistan,Tajikistan,TJK,TJ,geojson
+tanzania,Tanzania,TZA,TZ,geojson
+thailand,Thailand,THA,TH,geojson
+the-bahamas,"Bahamas, The",BHS,BS,geojson
+the-gambia,"Gambia, The",GMB,GM,geojson
+togo,Togo,TGO,TG,geojson
+tokelau,Tokelau (New Zealand),TKL,TK,override
+tonga,Tonga,TON,TO,override
+trinidad-and-tobago,Trinidad and Tobago,TTO,TT,geojson
+tunisia,Tunisia,TUN,TN,geojson
+turkey,Türkiye (Turkey),TUR,TR,geojson
+turkmenistan,Turkmenistan,TKM,TM,geojson
+turks-and-caicos,Turks and Caicos Islands (U.K.),TCA,TC,override
+tuvalu,Tuvalu,TUV,TV,override
+uganda,Uganda,UGA,UG,geojson
+ukraine,Ukraine,UKR,UA,geojson
+united-arab-emirates,United Arab Emirates,ARE,AE,geojson
+united-kingdom,"United Kingdom (including Channel Islands, Isle of Man, Ascension Island & Tristan Da Cunha Archipelago)",GBR,GB,geojson
+united-states,United States of America,USA,US,geojson
+uruguay,Uruguay,URY,UY,geojson
+usvirgin-islands,"Virgin Islands, U.S.",VIR,VI,override
+uzbekistan,Uzbekistan,UZB,UZ,geojson
+vanuatu,Vanuatu,VUT,VU,geojson
+venezuela,Venezuela,VEN,VE,geojson
+vietnam,Vietnam,VNM,VN,geojson
+wake-island,"Wake Island, U.S.",UMI,UM,override
+yemen,Yemen,YEM,YE,geojson
+zambia,Zambia,ZMB,ZM,geojson
+zimbabwe,Zimbabwe,ZWE,ZW,geojson
