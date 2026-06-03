@@ -1,7 +1,7 @@
 """Parser tiering and content-hash tests against real CDC field shapes."""
 
 from malaria_tracker.models import CdcMalaria
-from malaria_tracker.parse import derive_malaria
+from malaria_tracker.parse import derive_malaria, parse_area_statements
 
 AFGHANISTAN = CdcMalaria(
     HasTransmission=True,
@@ -91,3 +91,46 @@ def test_content_hash_changes_on_real_change():
         "recommended_prophylaxis": "<ul><li>Atovaquone-proguanil only</li></ul>"
     })
     assert derive_malaria(AFGHANISTAN).content_hash() != derive_malaria(changed).content_hash()
+
+
+# --------------------------------------------------------------------------- region_specific scope
+def test_region_specific_all_areas_is_area_not_all():
+    # "All areas in the states of ..." names specific states, so it is region-specific (scope
+    # "area"), not country-wide; a country with drugs in prophylaxis is therefore "partial".
+    brazil = CdcMalaria(
+        HasTransmission=True,
+        AreaOfRisk="<ul><li>All areas in the states of Acre, Amapá, and Rondônia</li></ul>",
+        RecommendedProphylaxis="<ul><li>Atovaquone-proguanil, doxycycline</li></ul>",
+    )
+    d = derive_malaria(brazil)
+    assert d.screening_class == "partial"
+    assert d.area_statements[0].scope == "area"
+
+
+def test_region_specific_district_and_province_alternation():
+    # The "in the (district|province|...)" alternation also yields scope "area".
+    for phrase in ("in the district of Foo", "in the province of Bar"):
+        d = derive_malaria(CdcMalaria(
+            HasTransmission=True,
+            AreaOfRisk=f"<ul><li>All areas {phrase}</li></ul>",
+            RecommendedProphylaxis="<ul><li>doxycycline</li></ul>",
+        ))
+        assert d.screening_class == "partial", phrase
+        assert d.area_statements[0].scope == "area", phrase
+
+
+def test_country_wide_all_areas_keeps_scope_all():
+    # "All areas <2,500 m" (no named region) is genuinely country-wide.
+    s = parse_area_statements("<ul><li>All areas &lt;2,500 m elevation</li></ul>")
+    assert s[0].scope == "all" and s[0].elev_max_m == 2500
+    d = derive_malaria(CdcMalaria(
+        HasTransmission=True,
+        AreaOfRisk="<ul><li>All areas &lt;2,500 m elevation</li></ul>",
+        RecommendedProphylaxis="<ul><li>doxycycline</li></ul>",
+    ))
+    assert d.area_statements[0].scope == "all"
+
+
+def test_throughout_the_country_keeps_scope_all():
+    s = parse_area_statements("<ul><li>Throughout the country including the capital</li></ul>")
+    assert s[0].scope == "all"

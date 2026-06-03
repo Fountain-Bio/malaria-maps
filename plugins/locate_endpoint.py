@@ -59,6 +59,5 @@ async def locate_view(request, datasette):
 
     geo = {**cand.to_dict(), "elevation_m": elevation}
     verdict = locate.determine(label, geo, record, areas)
-    locate.attach_record_fields(verdict, record)
     verdict.alternates = [c.to_dict() for c in alternates]
     return Response.json(verdict.to_dict())

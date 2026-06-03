@@ -85,18 +85,87 @@ def test_not_in_dataset():
     assert not v.residence_deferral and v.travel_deferral == "no" and not v.in_dataset
 
 
+def test_india_elevation_exclude_does_not_false_no_for_low_city():
+    # A partial, no-carveout country (e.g. India): a scope="all" include plus an exclude that
+    # carries BOTH an elev_min and a place= list of example high-altitude states. A low-elevation
+    # city whose admin1 is one of those states must NOT be a false "no" — the place-token exclude
+    # is ignored because it also carries an elev_min, so only the elevation loop can fire "no".
+    areas = [
+        area("Throughout the country", scope="all"),
+        area("No malaria transmission above 2,000 m in Arunachal Pradesh, Sikkim",
+             polarity="exclude", tier="none", place="Arunachal Pradesh, Sikkim", emin=2000),
+    ]
+    low = determine("Itanagar", geo("Itanagar", admin1="Arunachal Pradesh", elev=300),
+                    rec("partial", endemic=True), areas)
+    assert low.travel_deferral != "no" and low.travel_deferral == "yes"
+
+
+def test_india_elevation_exclude_fires_no_above_limit():
+    # Same India-shaped data: a city in one of the named states but at/above the elev_min is a
+    # genuine no-transmission zone, handled by the elevation loop.
+    areas = [
+        area("Throughout the country", scope="all"),
+        area("No malaria transmission above 2,000 m in Arunachal Pradesh, Sikkim",
+             polarity="exclude", tier="none", place="Arunachal Pradesh, Sikkim", emin=2000),
+    ]
+    high = determine("Gangtok", geo("Gangtok", admin1="Sikkim", elev=2500),
+                     rec("partial", endemic=True), areas)
+    assert high.travel_deferral == "no"
+
+
+def test_whole_country_unknown_elevation_is_uncertain():
+    # SRTM-failure path: an elevation-gated whole-country rule with no elevation resolved.
+    v = determine("Kabul", geo("Kabul", elev=None),
+                  rec("whole_country", endemic=True),
+                  [area("All areas <2,500 m", scope="all", emax=2500)])
+    assert v.travel_deferral == "uncertain" and v.confidence == "low"
+
+
+def test_partial_no_carveout_all_include_unknown_elevation_is_uncertain():
+    v = determine("Kabul", geo("Kabul", elev=None),
+                  rec("partial", endemic=True),
+                  [area("All areas <2,500 m", scope="all", emax=2500)])
+    assert v.travel_deferral == "uncertain" and v.confidence == "low"
+
+
+def test_partial_place_in_both_include_and_exclude_is_uncertain():
+    v = determine("Foo", geo("Foo", admin1="Foo Province"),
+                  rec("partial", endemic=True),
+                  [area("Foo Province risk", scope="area"),
+                   area("No malaria transmission in Foo Province",
+                        polarity="exclude", tier="none", place="Foo Province")])
+    assert v.travel_deferral == "uncertain"
+
+
+def test_partial_elevation_exclusion_fires_no():
+    # An elevation-based exclude (no place match needed) excludes a high city.
+    v = determine("Highville", geo("Highville", elev=2500),
+                  rec("partial", endemic=True),
+                  [area("No transmission above 2,000 m", polarity="exclude", tier="none", emin=2000)])
+    assert v.travel_deferral == "no" and "above" in v.travel_reason.lower()
+
+
+def test_carveout_sporadic_only_match_is_uncertain():
+    proph = ("<ul><li>Campeche: doxycycline</li>"
+             "<li>All other areas: No chemoprophylaxis recommended</li></ul>")
+    v = determine("Foo", geo("Foo", admin1="Foo Province"),
+                  rec("partial", endemic=True, prophylaxis_html=proph),
+                  [area("Rare cases or sporadic foci in Foo Province", tier="sporadic")])
+    assert v.travel_deferral == "uncertain"
+
+
 # --------------------------------------------------------------------------- geocoder
 def test_candidate_parsing():
     c = geocode._candidate({
         "geonameId": 1, "toponymName": "Cancún", "countryName": "Mexico",
         "countryCode": "MX", "adminName1": "Quintana Roo", "lat": "21.17", "lng": "-86.85",
-        "population": 888797, "fcode": "PPLA2",
+        "population": 888797,
     })
     assert c.country_iso2 == "MX" and c.admin1 == "Quintana Roo" and c.population == 888797
 
 
 def test_rank_promotes_exact_name_over_population():
-    changchun = geocode.GeoCandidate(2, "Changchun", "China", "CN", "Jilin", None, 0, 0, 4_700_000, "PPLA")
-    cancun = geocode.GeoCandidate(1, "Cancún", "Mexico", "MX", "Quintana Roo", None, 0, 0, 888_797, "PPLA2")
+    changchun = geocode.GeoCandidate(2, "Changchun", "China", "CN", "Jilin", None, 0, 0, 4_700_000)
+    cancun = geocode.GeoCandidate(1, "Cancún", "Mexico", "MX", "Quintana Roo", None, 0, 0, 888_797)
     ranked = geocode._rank([changchun, cancun], "Cancun")
     assert ranked[0].name == "Cancún"

@@ -101,7 +101,7 @@ def _within_elevation(stmt: dict, elev: int | None) -> str:
     return "within" if elev <= emax else "above"
 
 
-def determine(query: str, geo: dict, record: dict | None, area_statements: list[dict]) -> Verdict:
+def _classify(query: str, geo: dict, record: dict | None, area_statements: list[dict]) -> Verdict:
     resolved = {
         "name": geo.get("name"), "admin1": geo.get("admin1"), "admin2": geo.get("admin2"),
         "country_name": geo.get("country_name"), "country_iso2": geo.get("country_iso2"),
@@ -157,7 +157,11 @@ def determine(query: str, geo: dict, record: dict | None, area_statements: list[
                            f"{geo.get('name')} at {elev} m is above {emin} m, a no-transmission zone.",
                            a["raw_text"], "high", season, verbatim)
 
-    exclude_hit = next((a for a in excludes if a.get("place_name") and _place_matches(a, place_toks)), None)
+    # Only place-name excludes drive an exclusion here; elevation-gated excludes (which also
+    # carry a list of example places) are handled solely by the elevation loop above, so a
+    # low-elevation city in one of those named places is NOT a false "no".
+    exclude_hit = next((a for a in excludes
+                        if a.get("place_name") and not a.get("elev_min_m") and _place_matches(a, place_toks)), None)
     proph_inc = [a for a in includes if a["tier"] == "prophylaxis"]
     sporadic_inc = [a for a in includes if a["tier"] == "sporadic"]
     include_hit = next((a for a in includes if a["scope"] != "all" and _place_matches(a, place_toks)), None)
@@ -211,6 +215,11 @@ def determine(query: str, geo: dict, record: dict | None, area_statements: list[
                    "review the CDC text.", None, "low", season, verbatim)
 
 
+def determine(query: str, geo: dict, record: dict | None, area_statements: list[dict]) -> Verdict:
+    """Full verdict in one call: classify, then attach the CDC reference fields from the record."""
+    return attach_record_fields(_classify(query, geo, record, area_statements), record)
+
+
 # --------------------------------------------------------------------------- DB load (sync)
 def load_record(conn, iso2: str) -> tuple[dict | None, list[dict]]:
     rec = conn.execute(RECORD_SQL, (iso2,)).fetchone()
@@ -249,7 +258,6 @@ def main(argv: list[str] | None = None) -> int:
     elev = geocode.fetch_elevation(chosen.lat, chosen.lng) if needs_elevation(areas) else None
     geo = {**chosen.to_dict(), "elevation_m": elev}
     verdict = determine(args.query, geo, rec, areas)
-    attach_record_fields(verdict, rec)
     verdict.alternates = [c.to_dict() for c in alternates]
     conn.close()
     print(json.dumps(verdict.to_dict(), indent=2))

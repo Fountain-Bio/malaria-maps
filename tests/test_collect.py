@@ -18,9 +18,9 @@ def _dest(name, slug, did, *, transmission, area, prophylaxis):
     }
 
 
-def _result(dests):
+def _result(dests, http_status=200):
     raw = json.dumps(dests).encode("utf-8")
-    return FetchResult(raw_bytes=raw, sha256=hashlib.sha256(raw).hexdigest(), http_status=200,
+    return FetchResult(raw_bytes=raw, sha256=hashlib.sha256(raw).hexdigest(), http_status=http_status,
                        destinations=[CdcDestination.model_validate(d) for d in dests])
 
 
@@ -98,3 +98,50 @@ def test_removal(tmp_path):
         "SELECT COUNT(*) FROM malaria_record mr JOIN country c USING(country_id) "
         "WHERE c.display_name='Brazil' AND is_current=1").fetchone()[0]
     assert cur == 0
+
+
+def test_http_error_writes_no_records(tmp_path):
+    conn = db.connect(tmp_path / "m.db")
+    collect.init_and_seed(conn)
+    r = collect.run_collection(conn, _result([AFG, BRA], http_status=500),
+                               collection_date="2026-01-01", now="2026-01-01T00:00:00Z",
+                               raw_dir=tmp_path / "raw", dest_floor=1)
+    assert r["status"] == "http_error" and r["http_status"] == 500
+    assert conn.execute("SELECT COUNT(*) FROM malaria_record WHERE is_current=1").fetchone()[0] == 0
+
+
+def test_abort_floor_does_not_wipe_dataset(tmp_path):
+    conn = db.connect(tmp_path / "m.db")
+    collect.init_and_seed(conn)
+    _run(conn, [AFG, BRA], "2026-01-01", tmp_path)
+    before = conn.execute("SELECT COUNT(*) FROM malaria_record WHERE is_current=1").fetchone()[0]
+
+    # A short CDC feed (1 dest, floor 5) must abort without removing anything.
+    r = collect.run_collection(conn, _result([AFG]), collection_date="2026-02-01",
+                               now="2026-02-01T00:00:00Z", raw_dir=tmp_path / "raw", dest_floor=5)
+    assert r["status"] == "aborted"
+    after = conn.execute("SELECT COUNT(*) FROM malaria_record WHERE is_current=1").fetchone()[0]
+    assert after == before  # dataset unchanged
+    removed = conn.execute(
+        "SELECT COUNT(*) FROM change_event WHERE change_type='country_removed'").fetchone()[0]
+    assert removed == 0
+
+
+def test_became_non_endemic_event(tmp_path):
+    conn = db.connect(tmp_path / "m.db")
+    collect.init_and_seed(conn)
+    # Baseline: a real drug recommended -> endemic.
+    _run(conn, [AFG, BRA], "2026-01-01", tmp_path)
+    assert conn.execute(
+        "SELECT is_endemic FROM malaria_record mr JOIN country c USING(country_id) "
+        "WHERE c.display_name='Afghanistan' AND is_current=1").fetchone()[0] == 1
+
+    # Later: prophylaxis drops to "no chemoprophylaxis" while transmission stays true.
+    afg2 = _dest("Afghanistan", "afghanistan", 118, transmission=True,
+                 area="<ul><li>All areas &lt;2,500 m elevation</li></ul>",
+                 prophylaxis="<ul><li>No chemoprophylaxis recommended</li></ul>")
+    _run(conn, [afg2, BRA], "2026-02-01", tmp_path)
+
+    events = conn.execute(
+        "SELECT change_type FROM change_event WHERE collection_date='2026-02-01'").fetchall()
+    assert any(e["change_type"] == "became_non_endemic" for e in events)

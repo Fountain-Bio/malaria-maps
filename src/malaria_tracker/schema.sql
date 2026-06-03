@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS area_statement (
   raw_text      TEXT NOT NULL,                -- verbatim li text (entities decoded, tags stripped)
   polarity      TEXT NOT NULL,               -- 'include' | 'exclude'
   tier          TEXT NOT NULL,               -- 'prophylaxis' | 'sporadic' | 'none'
-  scope         TEXT,                         -- 'all' | 'region' | 'city' | 'district' | 'other'
+  scope         TEXT,                         -- 'all' (country-wide) | 'area' (region/place-specific)
   place_name    TEXT,
   elev_max_m    INTEGER,
   elev_min_m    INTEGER,

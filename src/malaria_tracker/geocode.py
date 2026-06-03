@@ -51,7 +51,6 @@ class GeoCandidate:
     lat: float
     lng: float
     population: int
-    fcode: str | None
 
     def to_dict(self) -> dict:
         return {
@@ -85,7 +84,6 @@ def _candidate(g: dict) -> GeoCandidate:
         admin2=g.get("adminName2") or None,
         lat=float(g["lat"]), lng=float(g["lng"]),
         population=int(g.get("population") or 0),
-        fcode=g.get("fcode") or None,
     )
 
 
