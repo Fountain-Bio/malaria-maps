@@ -1,0 +1,19 @@
+# Keep the build context small and free of secrets/local state.
+# data/malaria.db is the baked deliverable and IS copied explicitly in the Dockerfile.
+.git/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+_quarantine/
+.env
+tests/
+tools/
+docs/
+
+# Local-only and runtime-written data; never bake these in.
+data/raw/
+data/geocode_cache.sqlite*
+data/*.db-wal
+data/*.db-shm

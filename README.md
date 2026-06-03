@@ -126,12 +126,49 @@ uv run ruff check    # static analysis (E/F/I/UP/B/SIM/C4)
 Covers parser tiering (Afghanistan/Botswana/Syria/Greece), content-hash stability,
 collector idempotency, SCD2 version open/close, the change feed, removals, and as-of queries.
 
+## Deploy (Railway)
+
+The serving side is packaged as a baked, read-only image. `data/malaria.db` is copied into
+the image and opened immutable (`-i`), so each deploy is a fixed snapshot that a CDN can cache
+hard. `Dockerfile` installs deps with uv and runs Datasette against that immutable DB with the
+`web/` static mount and the local plugins dir. `railway.toml` selects the Dockerfile builder
+and health-checks `/-/versions.json` (a plain 200; `/malaria` 302-redirects under hashed URLs,
+so it isn't a stable check). It runs a single replica.
+
+Caching is designed so no cache purge is ever required, which matters because intermediate
+caches between the CDN and the browser can't be purged:
+
+- The API is served under `/malaria-<hash>/…` by `datasette-hashed-urls` with a one-year
+  `Cache-Control: max-age=31536000, public`. The hash is of the DB contents, so a rebake
+  changes every URL and stale entries simply stop being requested. Unhashed `/malaria/…`
+  paths 302 to the current hash.
+- Static assets get headers from `plugins/cache_headers.py`: `world.geojson` and `app.js`
+  go out immutable for a year, while `index.html` is `no-cache` so it always revalidates.
+
+Operational notes:
+
+- **Set `GEONAMES_USERNAME`** as a Railway service variable for the `/-/locate` city lookup.
+  Without it, `/-/locate` returns 502 and the rest of the app is unaffected.
+- **Weekly refresh:** `.github/workflows/weekly-collect.yml` runs the collector on a Monday
+  cron, checkpoints the WAL, and commits `data/malaria.db` only when it changed. That commit
+  is the deploy trigger once the repo is connected to Railway.
+- **Geocode cache:** `data/geocode_cache.sqlite` is written at runtime and is ephemeral on
+  Railway, rebuilt from GeoNames on demand. Mount a small volume at `/app/data` if you want
+  it to persist across deploys and save GeoNames credits.
+
+Build and check it locally:
+
+```bash
+docker build -t malaria-tracker .
+docker run --rm -p 8899:8765 -e GEONAMES_USERNAME=your_user malaria-tracker
+# map: http://127.0.0.1:8899/web/index.html
+```
+
 ## Scope and limitations
 
-- **Local for now.** The collector is a host-agnostic CLI and the reader is Datasette over
-  the SQLite file. Moving to Railway (service + volume + cron) or a GitHub Actions
-  baked-data + git model (a tamper-evident audit trail of the deferral list) is a packaging
-  step, not a redesign.
+- **Collection still runs as a CLI.** The collector is host-agnostic and writes the versioned
+  SQLite file, run locally or by the weekly GitHub workflow. The reader is Datasette over the
+  baked DB. See [Deploy (Railway)](#deploy-railway) for packaging.
 - **Map polygons.** The choropleth uses Natural Earth 110m country polygons. French/UK/NL
   overseas territories with their own CDC entry (e.g. French Guiana) have ISO3 in the data
   but no separate 110m polygon, so they appear in the table/API but not as a distinct map

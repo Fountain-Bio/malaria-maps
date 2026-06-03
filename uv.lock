@@ -129,6 +129,18 @@ wheels = [
 ]
 
 [[package]]
+name = "datasette-hashed-urls"
+version = "0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "datasette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/be/ac/f991e3c41f6e935968c0ba5def91571ed69c97273568b77dadc488141ec3/datasette-hashed-urls-0.4.tar.gz", hash = "sha256:f6f9d69f9a4bd65947489b9a10f8143882abee444e24013bbc1cd430932c1358", size = 8295, upload-time = "2022-03-24T20:53:17.419Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/51/80b6de42f85ffdcde2474977fc3ab4987e24379d8d2aa658897aed2589a1/datasette_hashed_urls-0.4-py3-none-any.whl", hash = "sha256:b719001a4c8a5c39cf654dd595df2d1ee93ede52253dbec7098c5a4631b80588", size = 8863, upload-time = "2022-03-24T20:53:16.297Z" },
+]
+
+[[package]]
 name = "datasette-render-html"
 version = "1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -264,6 +276,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "datasette" },
+    { name = "datasette-hashed-urls" },
     { name = "datasette-render-html" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -280,6 +293,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "datasette", specifier = ">=0.64" },
+    { name = "datasette-hashed-urls", specifier = ">=0.4" },
     { name = "datasette-render-html", specifier = ">=1.0" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pydantic", specifier = ">=2.7" },

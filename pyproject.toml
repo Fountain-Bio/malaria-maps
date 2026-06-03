@@ -10,6 +10,7 @@ dependencies = [
     "zstandard>=0.22",
     "datasette>=0.64",
     "datasette-render-html>=1.0",
+    "datasette-hashed-urls>=0.4",
 ]
 
 [dependency-groups]

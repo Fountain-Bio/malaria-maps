@@ -1,0 +1,54 @@
+name: Weekly CDC collection
+
+# Rebake the versioned malaria.db once a week. The collector is idempotent and guarded
+# (it aborts before any mutation on a bad CDC day), so a no-change week commits nothing.
+# A commit to data/malaria.db is the deploy trigger once Railway is connected to the repo.
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync runtime dependencies
+        run: uv sync --frozen --no-dev
+
+      - name: Collect from CDC
+        run: uv run python -m malaria_tracker.collect
+
+      - name: Checkpoint WAL into the main DB file
+        run: |
+          uv run python - <<'PY'
+          import sqlite3
+          conn = sqlite3.connect("data/malaria.db")
+          conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+          conn.close()
+          PY
+
+      - name: Commit if the data changed
+        run: |
+          if git diff --quiet -- data/malaria.db; then
+            echo "No change in malaria.db this week; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/malaria.db
+          git commit -m "data: weekly CDC refresh ($(date -u +%Y-%m-%d))"
+          git push
