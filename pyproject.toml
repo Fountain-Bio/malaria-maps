@@ -15,6 +15,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "ruff>=0.6",
 ]
 
 [build-system]
@@ -26,3 +27,11 @@ packages = ["src/malaria_tracker"]
 
 [project.scripts]
 malaria-collect = "malaria_tracker.collect:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["_quarantine"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4"]

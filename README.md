@@ -116,10 +116,11 @@ Natural Earth polygons, with a verified override list for small states and depen
 uv run python tools/build_crosswalk.py
 ```
 
-## Tests
+## Tests and linting
 
 ```bash
-uv run pytest
+uv run pytest        # unit tests
+uv run ruff check    # static analysis (E/F/I/UP/B/SIM/C4)
 ```
 
 Covers parser tiering (Afghanistan/Botswana/Syria/Greece), content-hash stability,

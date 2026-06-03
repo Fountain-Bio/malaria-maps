@@ -8,3 +8,4 @@ _quarantine/
 .pytest_cache/
 .DS_Store
 .env
+data/geocode_cache.sqlite*

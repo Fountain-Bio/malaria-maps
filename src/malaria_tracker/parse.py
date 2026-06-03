@@ -20,7 +20,7 @@ import re
 
 from selectolax.parser import HTMLParser
 
-from .models import AreaStatement, CdcMalaria, MalariaDerived, YellowFeverDerived, CdcYellowFever
+from .models import AreaStatement, CdcMalaria, CdcYellowFever, MalariaDerived, YellowFeverDerived
 
 KNOWN_DRUGS = [
     "atovaquone-proguanil", "chloroquine", "doxycycline",

@@ -74,7 +74,7 @@ class Verdict:
         return asdict(self)
 
 
-def attach_record_fields(verdict: "Verdict", record: dict | None) -> "Verdict":
+def attach_record_fields(verdict: Verdict, record: dict | None) -> Verdict:
     """Copy the CDC reference fields from the record onto the verdict (in place)."""
     if record:
         verdict.species_html = record.get("species_html")
@@ -204,7 +204,8 @@ def determine(query: str, geo: dict, record: dict | None, area_statements: list[
     if sporadic_hit:
         return Verdict(query, resolved, True, cls, residence, "uncertain",
                        "Falls in an area of rare/sporadic transmission; CDC may not recommend "
-                       "chemoprophylaxis there. Review the CDC text.", sporadic_hit["raw_text"], "low", season, verbatim)
+                       "chemoprophylaxis there. Review the CDC text.",
+                       sporadic_hit["raw_text"], "low", season, verbatim)
     return Verdict(query, resolved, True, cls, residence, "uncertain",
                    "Could not place this location within the chemoprophylaxis-recommended areas; "
                    "review the CDC text.", None, "low", season, verbatim)
@@ -220,6 +221,11 @@ def load_record(conn, iso2: str) -> tuple[dict | None, list[dict]]:
     return rec, areas
 
 
+def needs_elevation(area_statements: list[dict]) -> bool:
+    """Whether any area rule depends on elevation, so the SRTM call is worth making."""
+    return any(a.get("elev_max_m") or a.get("elev_min_m") for a in area_statements)
+
+
 # --------------------------------------------------------------------------- CLI
 def main(argv: list[str] | None = None) -> int:
     import argparse
@@ -233,16 +239,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--db", default=str(Path(__file__).resolve().parents[2] / "data" / "malaria.db"))
     args = ap.parse_args(argv)
 
-    result = geocode.geocode(args.query)
-    if result is None:
+    cands = geocode.search_place(args.query)
+    if not cands:
         print(json.dumps({"error": "no geocode match", "query": args.query}))
         return 1
-    geo = {**result.chosen.to_dict(), "elevation_m": result.elevation_m}
+    chosen, alternates = cands[0], cands[1:5]
     conn = db.connect(args.db)
-    rec, areas = load_record(conn, result.chosen.country_iso2)
+    rec, areas = load_record(conn, chosen.country_iso2)
+    elev = geocode.fetch_elevation(chosen.lat, chosen.lng) if needs_elevation(areas) else None
+    geo = {**chosen.to_dict(), "elevation_m": elev}
     verdict = determine(args.query, geo, rec, areas)
     attach_record_fields(verdict, rec)
-    verdict.alternates = [c.to_dict() for c in result.alternates]
+    verdict.alternates = [c.to_dict() for c in alternates]
     conn.close()
     print(json.dumps(verdict.to_dict(), indent=2))
     return 0
