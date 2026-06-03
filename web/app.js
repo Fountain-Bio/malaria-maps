@@ -69,6 +69,7 @@ async function openCountry(p) {
   const body = document.getElementById("panel-body");
   const iso = p._iso;
   body.innerHTML = `<h2>${p._name}</h2> <span class="badge b-${badge(p._class)}">${labelFor(p._class)}</span>`;
+  body.innerHTML += implicationHtml(p._class);
   panel.classList.add("open");
 
   let rec = null;
@@ -101,3 +102,59 @@ function field(k, html) {
   return `<div class="field"><div class="k">${k}</div><div class="v">${html}</div></div>`;
 }
 function badge(c) { return c === "whole_country" ? "whole" : c === "partial" ? "partial" : "none"; }
+
+// --- FDA deferral implication, derived from screening_class ---
+function implicationHtml(cls) {
+  let lines;
+  if (cls === "whole_country") {
+    lines = [
+      "<b>Residence</b> &gt;5 yr in this country: defer &mdash; whole country.",
+      "<b>Travel</b> &gt;24 h to anywhere in this country: defer (3-month window).",
+    ];
+  } else if (cls === "partial") {
+    lines = [
+      "<b>Residence</b> &gt;5 yr in this country: defer &mdash; whole country (it contains a malaria-endemic area).",
+      "<b>Travel</b> &gt;24 h to the chemoprophylaxis-recommended areas listed below: defer (3-month window).",
+    ];
+  } else {
+    lines = [
+      "Not endemic for deferral: CDC recommends no chemoprophylaxis here, so malaria residence/travel deferral does not apply under current criteria.",
+    ];
+  }
+  return `<div class="field implic"><div class="k">Deferral implication (FDA 12/2022)</div>
+    <div class="v"><ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul>
+      <div class="implic-note">Pending FDA Jan-2025 draft would move to selective donor testing.</div>
+    </div></div>`;
+}
+
+// --- Global "Screening rules" drawer ---
+const RULE_TITLES = {
+  endemic_definition: "Endemic definition",
+  residence_over_5yr: "Residence (>5 years)",
+  residence_reeligibility: "Re-eligibility after residence",
+  travel_to_endemic_area: "Travel to an endemic area",
+  history_of_malaria: "History of malaria",
+  testing_transition: "Testing transition",
+};
+let rulesLoaded = false;
+
+async function openRules() {
+  const drawer = document.getElementById("rules");
+  drawer.classList.add("open");
+  if (rulesLoaded) return;
+  const body = document.getElementById("rules-body");
+  const rules = await fetch("/malaria/deferral_rule.json?_shape=array")
+    .then((r) => r.json()).catch(() => []);
+  if (!rules.length) { body.textContent = "Could not load rules."; return; }
+  body.innerHTML = rules.map((r) => `
+    <div class="rule">
+      <div class="rule-h">${RULE_TITLES[r.code] || r.code}</div>
+      <div class="rule-d">${r.description}</div>
+      ${r.threshold ? `<div class="rule-m"><b>Threshold:</b> ${r.threshold}</div>` : ""}
+      ${r.deferral_window ? `<div class="rule-m"><b>Window:</b> ${r.deferral_window}</div>` : ""}
+      ${r.citation ? `<div class="rule-c">${r.citation}</div>` : ""}
+    </div>`).join("");
+  rulesLoaded = true;
+}
+
+document.getElementById("rules-btn").addEventListener("click", openRules);
