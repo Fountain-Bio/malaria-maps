@@ -1,0 +1,124 @@
+# Malaria Region Tracker
+
+A backend that tracks malaria endemic-region data for US blood-donor geographic deferral
+screening, built entirely from **public-domain CDC primary data**. It collects daily,
+versions every change, and serves a read-only API plus an explorable UI with a world map.
+
+## Why this exists
+
+Donor screening defers donors based on malaria-endemic residence and travel. The FDA
+defines "malaria-endemic" (Guidance for Industry, *Recommendations to Reduce the Risk of
+Transfusion-Transmitted Malaria*, final 12/2022) as anywhere **CDC recommends antimalarial
+chemoprophylaxis**. So CDC's per-country recommendation is the operative definition, and
+this tracker reads it directly from the source CDC publishes:
+
+```
+https://wwwnc.cdc.gov/travel/Services/xmlservices.asmx/YellowFeverInformationJson
+```
+
+A correctness point baked into the classifier: `HasTransmission = true` is **not** the same
+as "deferrable." Of 90 countries with transmission, only 83 have an area where CDC
+recommends chemoprophylaxis; 7 (e.g. Greece, Syria, Suriname) have transmission but
+"no chemoprophylaxis recommended," so they are not endemic for deferral. The parser keys
+the deferral classification off `RecommendedProphylaxis`, not the transmission boolean, and
+always preserves the verbatim CDC text for the human screener.
+
+WHO and the Malaria Atlas Project measure epidemiological endemicity, which is a different
+question, so they are not used to drive classification.
+
+## Architecture
+
+```
+CDC JSON endpoint ──> collect ──> versioned SQLite (data/malaria.db) ──> Datasette ──> API + UI + map
+   (daily)         parse + SCD2       history + change feed             read-only
+                   + raw archive
+```
+
+- **Versioning:** slowly-changing-dimension type-2. A country gets a new `malaria_record`
+  version only when its normalized content changes (a date-only republish does not create a
+  version). This answers "what was the endemic list on date X" and "what changed between two
+  dates" cheaply.
+- **Provenance:** every derived row links to the archived raw payload (`data/raw/`,
+  content-addressed, zstd) and the `fetch_run` that produced it.
+- **Change feed:** `change_event` records `country_added`, `became_endemic`,
+  `field_changed`, etc.
+
+## Quickstart
+
+```bash
+uv sync                                   # install deps
+uv run python -m malaria_tracker.collect  # fetch CDC -> versioned SQLite (idempotent)
+uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --port 8765
+```
+
+Then open:
+
+- **Map:** http://127.0.0.1:8765/web/index.html (red = whole-country endemic, amber =
+  endemic in specific areas, grey = not endemic; click a country for detail + history)
+- **Datasette home:** http://127.0.0.1:8765/malaria
+
+Run the collector daily (manual, or a local cron entry). It is idempotent: a second run the
+same day with an unchanged payload writes nothing.
+
+## API (read-only, via Datasette)
+
+Every table, view, and canned query is available as JSON by appending `.json`
+(`?_shape=array` for a plain list).
+
+| Need | Endpoint |
+|---|---|
+| Current status, one row/country | `/malaria/v_malaria_current.json?_shape=array` |
+| Map feed (ISO3 + class) | `/malaria/country_current.json?_shape=array&_size=max` |
+| One country | `/malaria/v_malaria_current.json?_shape=array&iso3=AFG` |
+| Changes since a date | `/malaria/changes_since.json?since=2026-01-01&_shape=array` |
+| Endemic list as of a date | `/malaria/endemic_list_as_of.json?as_of=2026-01-01&_shape=array` |
+| Country version history | `/malaria/country_history.json?country=Afghanistan&_shape=array` |
+| Full-text area search | `/malaria/search_areas.json?q=gold+mining&_shape=array` |
+| Collection provenance | `/malaria/fetch_run.json?_shape=array` |
+
+Datasette also gives faceted browse, FTS, and a read-only SQL box for ad-hoc queries.
+
+## Data model
+
+- `malaria_record` — SCD2 versioned classification (verbatim CDC HTML + derived fields:
+  `is_endemic`, `whole_country_endemic`, `screening_class`, `prophylaxis_drugs_json`,
+  `species_json`, `chloroquine_resistant`).
+- `area_statement` — parsed sub-national risk statements (`polarity`, `tier` =
+  prophylaxis/sporadic/none, elevation, season, excluded cities).
+- `yellowfever_record` — captured from the same feed (secondary).
+- `country` / `country_alias` / `cdc_iso3` — country spine + CDC→ISO3 crosswalk.
+- `change_event` — the change feed. `fetch_run` / `raw_payload` — provenance.
+- `deferral_rule` — FDA 12/2022 rules as versioned reference (so the pending Jan-2025
+  testing-based draft can be added without redesign).
+- Views: `v_malaria_current`, `country_current`, `v_malaria_history`. FTS: `malaria_fts`.
+
+## Reproducing the crosswalk
+
+`reference/country_iso3.csv` maps CDC slugs to ISO-3166 alpha-3 (auto-matched against the
+Natural Earth polygons, with a verified override list for small states and dependencies):
+
+```bash
+uv run python tools/build_crosswalk.py
+```
+
+## Tests
+
+```bash
+uv run pytest
+```
+
+Covers parser tiering (Afghanistan/Botswana/Syria/Greece), content-hash stability,
+collector idempotency, SCD2 version open/close, the change feed, removals, and as-of queries.
+
+## Scope and limitations
+
+- **Local for now.** The collector is a host-agnostic CLI and the reader is Datasette over
+  the SQLite file. Moving to Railway (service + volume + cron) or a GitHub Actions
+  baked-data + git model (a tamper-evident audit trail of the deferral list) is a packaging
+  step, not a redesign.
+- **Map polygons.** The choropleth uses Natural Earth 110m country polygons. French/UK/NL
+  overseas territories with their own CDC entry (e.g. French Guiana) have ISO3 in the data
+  but no separate 110m polygon, so they appear in the table/API but not as a distinct map
+  fill. Country-level coloring is complete.
+- **Area parsing is best-effort.** Verbatim CDC text is always stored and shown; the parsed
+  structure is an aid, not a replacement for the source text.

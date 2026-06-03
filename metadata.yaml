@@ -1,0 +1,86 @@
+title: Malaria Region Tracker
+description_html: |
+  <p>Malaria endemic-region data for US blood-donor geographic deferral screening, built
+  entirely from public-domain CDC primary data (CDC Travelers' Health). A place is
+  <em>malaria-endemic</em> for deferral exactly where CDC recommends antimalarial
+  chemoprophylaxis (FDA guidance, 12/2022). Data is versioned (SCD2) with a change feed.</p>
+  <p><strong><a href="/web/index.html">&#127758; Open the world map &rarr;</a></strong>
+  &nbsp;|&nbsp; <a href="/malaria/v_malaria_current">Current state</a>
+  &nbsp;|&nbsp; <a href="/malaria/change_event">Change feed</a></p>
+license: Public Domain (CDC)
+license_url: https://www.cdc.gov/other/agencymaterials.html
+source: CDC Travelers' Health (Yellow Fever & Malaria, by country)
+source_url: https://wwwnc.cdc.gov/travel/Services/xmlservices.asmx/YellowFeverInformationJson
+
+databases:
+  malaria:
+    tables:
+      v_malaria_current:
+        title: Current malaria status (one row per country)
+        sort: display_name
+        facets: [screening_class, chloroquine_resistant, has_transmission]
+        plugins:
+          datasette-render-html:
+            columns:
+              - area_of_risk_html
+              - recommended_prophylaxis_html
+              - species_html
+              - chloroquine_resist_html
+      country_current:
+        title: Map feed (ISO3 + classification)
+        facets: [screening_class]
+      change_event:
+        title: Change feed
+        sort_desc: collection_date
+        facets: [change_type]
+      malaria_record:
+        title: Versioned malaria records (full history)
+      area_statement:
+        title: Parsed sub-national area statements
+        facets: [tier, polarity]
+      deferral_rule:
+        title: FDA deferral rules (regulatory reference)
+      fetch_run:
+        title: Collection provenance
+        sort_desc: collection_date
+
+    queries:
+      changes_since:
+        title: Changes since a date
+        description_html: "What changed in the endemic data on or after a given date."
+        sql: |-
+          SELECT collection_date, country_name, change_type,
+                 changed_fields_json, old_value, new_value
+          FROM change_event
+          WHERE collection_date >= :since
+          ORDER BY collection_date DESC, country_name
+
+      endemic_list_as_of:
+        title: Endemic list as of a date
+        description_html: "The deferral-relevant endemic country list as it stood on a past date."
+        sql: |-
+          SELECT c.iso3, c.display_name, mr.screening_class, mr.area_summary
+          FROM malaria_record mr JOIN country c USING (country_id)
+          WHERE mr.is_endemic = 1
+            AND mr.valid_from <= :as_of
+            AND (mr.valid_to > :as_of OR mr.valid_to IS NULL)
+          ORDER BY c.display_name
+
+      country_history:
+        title: Country history
+        description_html: "Every version of a country's malaria classification over time."
+        sql: |-
+          SELECT mr.valid_from, mr.valid_to, mr.is_current, mr.screening_class,
+                 mr.is_endemic, mr.area_summary, mr.cdc_updated_date
+          FROM malaria_record mr JOIN country c USING (country_id)
+          WHERE c.display_name = :country
+          ORDER BY mr.valid_from DESC
+
+      search_areas:
+        title: Search area text
+        description_html: "Full-text search over country names and verbatim risk-area text."
+        sql: |-
+          SELECT f.display_name, f.iso3, f.area_text
+          FROM malaria_fts f
+          WHERE malaria_fts MATCH :q
+          ORDER BY rank

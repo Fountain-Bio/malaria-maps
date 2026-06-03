@@ -1,0 +1,68 @@
+[
+  {
+    "code": "endemic_definition",
+    "exposure_type": null,
+    "geo_scope": null,
+    "threshold": null,
+    "deferral_window": null,
+    "description": "A country/area is 'malaria-endemic' where CDC recommends antimalarial chemoprophylaxis (CDC Yellow Book / Travelers' Health) at the time the donor is screened.",
+    "citation": "FDA Guidance for Industry, Recommendations to Reduce the Risk of Transfusion-Transmitted Malaria (final, 12/2022)",
+    "valid_from": "2022-12-08",
+    "valid_to": null
+  },
+  {
+    "code": "residence_over_5yr",
+    "exposure_type": "residence",
+    "geo_scope": "whole_country",
+    "threshold": "continuous residence > 5 years",
+    "deferral_window": null,
+    "description": "A former resident (>5 continuous years) of a country that has ANY malaria-endemic area is screened treating the entire country as endemic. Residence is assessed by country, not by sub-national area.",
+    "citation": "FDA 12/2022, transfusion-transmitted malaria guidance",
+    "valid_from": "2022-12-08",
+    "valid_to": null
+  },
+  {
+    "code": "residence_reeligibility",
+    "exposure_type": "residence",
+    "geo_scope": "whole_country",
+    "threshold": "3 continuous years residence in a non-endemic country",
+    "deferral_window": "3 years",
+    "description": "A former resident of a malaria-endemic country becomes eligible after establishing 3 continuous years of residence in a non-malaria-endemic country (with no disqualifying travel).",
+    "citation": "FDA 12/2022, transfusion-transmitted malaria guidance",
+    "valid_from": "2022-12-08",
+    "valid_to": null
+  },
+  {
+    "code": "travel_to_endemic_area",
+    "exposure_type": "travel",
+    "geo_scope": "endemic_area_only",
+    "threshold": "travel > 24 hours and < 5 years to a malaria-endemic area",
+    "deferral_window": "3 months",
+    "description": "Travel of more than 24 hours and less than 5 years to a malaria-endemic AREA triggers assessment; the donor is assessed for such travel within the past 3 months (deferral runs 3 months from departure from the endemic area).",
+    "citation": "FDA 12/2022, transfusion-transmitted malaria guidance",
+    "valid_from": "2022-12-08",
+    "valid_to": null
+  },
+  {
+    "code": "history_of_malaria",
+    "exposure_type": "history",
+    "geo_scope": null,
+    "threshold": "prior diagnosis of malaria",
+    "deferral_window": "3 years (deferral model)",
+    "description": "A donor with a history of malaria is deferred (historically 3 years from becoming asymptomatic under the deferral model).",
+    "citation": "FDA 12/2022, transfusion-transmitted malaria guidance",
+    "valid_from": "2022-12-08",
+    "valid_to": null
+  },
+  {
+    "code": "testing_transition",
+    "exposure_type": null,
+    "geo_scope": null,
+    "threshold": null,
+    "deferral_window": null,
+    "description": "First FDA-licensed donor malaria test (Roche cobas Malaria) approved 3/2024. A January 2025 DRAFT guidance proposes a selective-testing model that would supersede the 12/2022 deferral model; it is not yet final. Rules are versioned so the testing model can be added without redesign.",
+    "citation": "FDA cobas Malaria approval (3/2024); FDA draft guidance (Federal Register 2025-01-16)",
+    "valid_from": "2024-03-01",
+    "valid_to": null
+  }
+]
