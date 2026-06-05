@@ -6,73 +6,166 @@
   <title>Malaria Region Tracker — Map</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <style>
-    :root { --red:#cb181d; --amber:#fd8d3c; --grey:#dfe3e8; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; font-family: -apple-system, system-ui, "Segoe UI", sans-serif; }
-    #map { position: absolute; inset: 0; }
-    header {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 2;
-      background: rgba(255,255,255,0.94); padding: 10px 16px;
-      border-bottom: 1px solid #d6dbe0; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+    :root {
+      /* classification (map fills + verdict badges) */
+      --red: #cb181d; --amber: #fd8d3c; --grey: #dfe3e8; --ok: #2e7d32;
+      /* accent (links + primary actions) */
+      --accent: #1b6ec2; --accent-ink: #155a9e; --accent-bg: #eef4fb; --accent-border: #cfe0f2;
+      /* ink ramp — every step clears WCAG AA (>=4.5:1) on white */
+      --ink: #1c2630;     /* primary text */
+      --ink-2: #41505b;   /* secondary text */
+      --muted: #5b6670;   /* labels, meta (~5.7:1) */
+      --faint: #6b7680;   /* least prominent, still ~4.6:1 */
+      /* surfaces + lines */
+      --surface: #fff; --surface-2: #f4f6f8;
+      --line: #d6dbe0; --line-2: #e7ebef;
+      /* PR-eligibility pills */
+      --pr-yes-bg: #e7f2ea; --pr-yes-ink: #1f6b34; --pr-yes-dot: #2e7d32;
+      --pr-no-bg: #eef1f4; --pr-no-ink: #515b64; --pr-no-dot: #8a939b;
+      --shadow-panel: -6px 0 22px rgba(20, 30, 40, .08);
+      --shadow-rules: 6px 0 22px rgba(20, 30, 40, .09);
+      --ease: cubic-bezier(.22, 1, .36, 1);
+      --z-panel: 2; --z-rules: 3; --z-popup: 5;
     }
-    header h1 { font-size: 16px; margin: 0; font-weight: 650; }
-    header .sub { font-size: 12px; color: #5b6670; }
-    header a { color: #1b6ec2; text-decoration: none; }
-    .legend { display: flex; gap: 14px; font-size: 12px; margin-left: auto; align-items: center; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+      color: var(--ink); }
+    #map { position: absolute; inset: 0; }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: var(--z-panel);
+      background: rgba(255, 255, 255, .94); padding: 10px 16px;
+      border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+    header .sub { font-size: 12px; color: var(--muted); }
+    header a { color: var(--accent); text-decoration: none; }
+    header a:hover { text-decoration: underline; }
+    .legend { display: flex; gap: 14px; font-size: 12px; margin-left: auto; align-items: center; color: var(--ink-2); }
     .legend span { display: inline-flex; align-items: center; gap: 5px; }
     .sw { width: 13px; height: 13px; border-radius: 3px; border: 1px solid #aab2ba; }
-    #panel {
-      position: absolute; top: 64px; right: 0; bottom: 0; width: 380px; max-width: 92vw; z-index: 2;
-      background: #fff; border-left: 1px solid #d6dbe0; box-shadow: -4px 0 18px rgba(0,0,0,0.07);
-      overflow-y: auto; padding: 18px 20px; transform: translateX(105%); transition: transform .18s ease;
-    }
-    #panel.open { transform: none; }
-    #panel h2 { font-size: 18px; margin: 0 6px 0 0; }
-    .badge { display: inline-block; font-size: 11px; font-weight: 650; padding: 3px 9px;
-      border-radius: 999px; color: #fff; vertical-align: middle; }
-    .b-whole { background: var(--red); } .b-partial { background: var(--amber); color:#5a2a00; }
-    .b-none { background: #8a939b; }
-    #panel .close { float: right; cursor: pointer; color: #8a939b; font-size: 20px; line-height: 1; border: 0; background: none; }
-    .field { margin-top: 14px; }
-    .field .k { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #7a8794; margin-bottom: 3px; }
-    .field .v, .field .v ul { font-size: 13.5px; color: #1f2a33; }
-    .field .v ul { margin: 4px 0 0; padding-left: 18px; }
-    .links { margin-top: 18px; font-size: 12.5px; display: flex; gap: 14px; }
-    .updated { color: #8a939b; font-size: 11.5px; margin-top: 16px; }
-    .rules-btn { font-size: 12px; font-weight: 600; color: #1b6ec2; background: #eef4fb;
-      border: 1px solid #cfe0f2; border-radius: 6px; padding: 5px 11px; cursor: pointer; align-self: center; }
-    .rules-btn:hover { background: #e2eefb; }
-    #rules {
-      position: absolute; top: 64px; left: 0; bottom: 0; width: 410px; max-width: 92vw; z-index: 3;
-      background: #fff; border-right: 1px solid #d6dbe0; box-shadow: 4px 0 18px rgba(0,0,0,0.08);
-      overflow-y: auto; padding: 16px 22px; transform: translateX(-105%); transition: transform .18s ease;
-    }
-    #rules.open { transform: none; }
-    #rules h2 { font-size: 17px; margin: 0 6px 0 0; }
-    #rules .close { float: right; cursor: pointer; color: #8a939b; font-size: 20px; line-height: 1; border: 0; background: none; }
-    .rules-sub { font-size: 12px; color: #7a8794; margin: 2px 0 4px; }
-    .rule { border-top: 1px solid #eceff2; padding: 11px 0; }
-    .rule-h { font-weight: 650; font-size: 13.5px; color: #1f2a33; }
-    .rule-d { font-size: 13px; color: #36424c; margin-top: 3px; }
-    .rule-m { font-size: 12px; color: #4a5560; margin-top: 4px; }
-    .rule-c { font-size: 11px; color: #97a0a8; margin-top: 5px; }
-    .implic { background: #fbf6ec; border: 1px solid #f0e3c8; border-radius: 8px; padding: 10px 12px; }
-    .implic .k { color: #8a6d1f; }
-    .implic .v ul { margin: 2px 0 0; padding-left: 18px; }
-    .implic-note { font-size: 11px; color: #9a8a63; margin-top: 7px; }
+
     #search { display: flex; gap: 6px; align-items: center; }
-    #search input { font-size: 13px; padding: 6px 10px; border: 1px solid #cfd6dd; border-radius: 6px; width: 210px; }
-    #search button { font-size: 13px; padding: 6px 12px; border: 0; border-radius: 6px; background: #1b6ec2; color: #fff; cursor: pointer; }
+    #search input { font-size: 13px; padding: 7px 10px; border: 1px solid #cfd6dd; border-radius: 6px;
+      width: 210px; max-width: 46vw; color: var(--ink); }
+    #search input::placeholder { color: var(--faint); }
+    #search button { font-size: 13px; font-weight: 600; padding: 7px 13px; border: 0; border-radius: 6px;
+      background: var(--accent); color: #fff; cursor: pointer; transition: background .15s var(--ease); }
+    #search button:hover { background: var(--accent-ink); }
+
+    .rules-btn { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-bg);
+      border: 1px solid var(--accent-border); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+      align-self: center; transition: background .15s var(--ease); }
+    .rules-btn:hover { background: #e2eefb; }
+
+    /* ---- drawers: shared shell ---- */
+    #panel, #rules {
+      position: absolute; top: 64px; bottom: 0; background: var(--surface); max-width: 92vw;
+      overflow-y: auto; transition: transform .22s var(--ease);
+    }
+    #panel {
+      right: 0; width: 384px; z-index: var(--z-panel); padding: 18px 20px;
+      border-left: 1px solid var(--line); box-shadow: var(--shadow-panel); transform: translateX(105%);
+    }
+    #rules {
+      left: 0; width: 412px; z-index: var(--z-rules); padding: 16px 22px 28px;
+      border-right: 1px solid var(--line); box-shadow: var(--shadow-rules); transform: translateX(-105%);
+    }
+    #panel.open, #rules.open { transform: none; }
+
+    .close { position: absolute; top: 14px; right: 16px; cursor: pointer; color: var(--muted);
+      font-size: 22px; line-height: 1; border: 0; background: none; padding: 4px 8px; border-radius: 6px; }
+    .close:hover { color: var(--ink); background: var(--surface-2); }
+
+    #panel h2 { font-size: 19px; margin: 0 36px 0 0; letter-spacing: -.01em; }
+    #rules h2 { font-size: 17px; margin: 0 36px 2px 0; letter-spacing: -.01em; }
+    .rules-sub { font-size: 12px; color: var(--muted); margin: 0 0 6px; line-height: 1.45; }
+
+    /* ---- detail panel fields ---- */
     .verdict-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
     .vbadge { font-size: 12px; font-weight: 650; padding: 4px 10px; border-radius: 6px; }
     .v-defer { background: var(--red); color: #fff; }
-    .v-ok { background: #2e7d32; color: #fff; }
+    .v-ok { background: var(--ok); color: #fff; }
     .v-review { background: var(--amber); color: #5a2a00; }
-    .conf { font-size: 11.5px; color: #7a8794; margin-top: 6px; }
+    .conf { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+    .pr-row { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .pr-line { display: flex; align-items: flex-start; gap: 7px; font-size: 12px;
+      line-height: 1.45; color: var(--ink-2); }
+    .pr-line .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; margin-top: 5px; }
+    .pr-line-yes .dot { background: var(--pr-yes-dot); }
+    .pr-line-no .dot { background: var(--pr-no-dot); }
+    .field { margin-top: 15px; }
+    .field .k { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+      font-weight: 600; margin-bottom: 4px; }
+    .field .v, .field .v ul { font-size: 13.5px; color: var(--ink); line-height: 1.5; }
+    .field .v ul { margin: 4px 0 0; padding-left: 18px; }
+    .field .v li { margin-bottom: 3px; }
+    .links { margin-top: 18px; font-size: 12.5px; display: flex; gap: 14px; }
+    .links a { color: var(--accent); text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
+    .updated { color: var(--faint); font-size: 11.5px; margin-top: 16px; }
+    .geo-credit { font-size: 10.5px; color: var(--faint); margin-top: 16px; }
+
     .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
-    .chip { font-size: 11.5px; padding: 4px 9px; border: 1px solid #cfd6dd; border-radius: 999px; background: #f5f7f9; cursor: pointer; }
+    .chip { font-size: 11.5px; padding: 5px 10px; border: 1px solid #cfd6dd; border-radius: 999px;
+      background: var(--surface-2); color: var(--ink-2); cursor: pointer; transition: background .15s var(--ease); }
     .chip:hover { background: #e9eef3; }
-    .geo-credit { font-size: 10.5px; color: #9aa3ab; margin-top: 16px; }
+
+    /* ---- screening-rules drawer: sections, matrix, disclosure ---- */
+    .sec-h { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); font-weight: 600; margin: 20px 0 9px; }
+    .sec-h:first-child { margin-top: 8px; }
+
+    /* PR-eligibility pills (shared by matrix + panel color vocabulary) */
+    .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+      padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .pr-yes { background: var(--pr-yes-bg); color: var(--pr-yes-ink); }
+    .pr-yes .dot { background: var(--pr-yes-dot); }
+    .pr-no { background: var(--pr-no-bg); color: var(--pr-no-ink); }
+    .pr-no .dot { background: var(--pr-no-dot); }
+
+    .matrix { border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+    .mx-head, .mx-row { display: grid; grid-template-columns: 1.45fr 0.7fr auto; gap: 8px;
+      align-items: center; padding: 8px 10px; }
+    .mx-head { background: var(--surface-2); font-size: 10.5px; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+    .mx-row { border-top: 1px solid var(--line-2); font-size: 12.5px; }
+    .mx-cat { color: var(--ink); font-weight: 600; line-height: 1.3; }
+    .mx-win { color: var(--ink-2); }
+    .mx-pr { justify-self: end; }
+    .mx-pr .pill { font-size: 10.5px; padding: 2px 7px; }
+    .mx-na { color: var(--faint); }
+
+    .pr-explain { margin-top: 12px; padding: 12px; background: var(--surface-2);
+      border: 1px solid var(--line-2); border-radius: 8px; }
+    .pr-sum { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+    .pr-details { margin-top: 9px; }
+    .pr-details summary { font-size: 12px; font-weight: 600; color: var(--accent);
+      cursor: pointer; list-style: none; }
+    .pr-details summary::-webkit-details-marker { display: none; }
+    .pr-details summary::before { content: "▸ "; }
+    .pr-details[open] summary::before { content: "▾ "; }
+
+    .def { border-top: 1px solid var(--line-2); padding: 12px 0; }
+    .def:first-of-type { border-top: 0; }
+    .def-h { font-size: 13px; font-weight: 650; color: var(--ink); margin: 0; letter-spacing: -.01em; }
+    .def-d { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin: 6px 0 0; }
+
+    /* shared rule-text styles (reused by the PR disclosure) */
+    .rule-d { font-size: 13px; color: var(--ink-2); line-height: 1.55; margin: 9px 0 0; }
+    .rule-m { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin: 7px 0 0; }
+    .rule-m b { color: var(--ink-2); font-weight: 600; }
+    .rule-c { font-size: 11.5px; color: var(--faint); line-height: 1.4; margin: 7px 0 0; }
+
+    /* maplibre hover popup */
+    .maplibregl-popup-content { font-size: 12.5px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #panel, #rules, #search button, .rules-btn, .chip { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -85,7 +178,7 @@
         <span id="counts">loading…</span></div>
     </div>
     <form id="search" autocomplete="off">
-      <input id="city-input" type="text" placeholder="Search a city or town…" aria-label="Search a city" />
+      <input id="city-input" type="text" placeholder="Search a city or town…" aria-label="Search a city or country" />
       <button type="submit">Check</button>
     </form>
     <div class="legend">
@@ -96,10 +189,14 @@
     <button id="rules-btn" class="rules-btn">Screening rules</button>
   </header>
   <div id="map"></div>
-  <aside id="panel"><button class="close" onclick="document.getElementById('panel').classList.remove('open')">&times;</button>
+  <aside id="panel" aria-label="Location detail">
+    <button class="close" type="button" aria-label="Close detail panel"
+      onclick="document.getElementById('panel').classList.remove('open')">&times;</button>
     <div id="panel-body"></div>
   </aside>
-  <aside id="rules"><button class="close" onclick="document.getElementById('rules').classList.remove('open')">&times;</button>
+  <aside id="rules" aria-label="FDA screening rules">
+    <button class="close" type="button" aria-label="Close screening rules"
+      onclick="document.getElementById('rules').classList.remove('open')">&times;</button>
     <h2>FDA screening rules</h2>
     <div class="rules-sub">Recommendations to Reduce the Risk of Transfusion-Transmitted Malaria — Guidance for Industry (final, 12/2022)</div>
     <div id="rules-body">loading…</div>

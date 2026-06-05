@@ -204,6 +204,7 @@ CREATE TABLE IF NOT EXISTS deferral_rule (
   geo_scope      TEXT,                         -- 'whole_country' | 'endemic_area_only'
   threshold      TEXT,
   deferral_window TEXT,
+  pathogen_reduction TEXT,                       -- 'authorized' | 'not_authorized' | NULL (n/a): may FDA-approved PR of platelets/plasma replace this deferral?
   description    TEXT NOT NULL,
   citation       TEXT,
   valid_from     TEXT,

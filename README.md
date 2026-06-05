@@ -144,6 +144,8 @@ caches between the CDN and the browser can't be purged:
   paths 302 to the current hash.
 - Static assets get headers from `plugins/cache_headers.py`: `world.geojson` and `app.js`
   go out immutable for a year, while `index.html` is `no-cache` so it always revalidates.
+  Immutable caching is gated on `IMMUTABLE_ASSETS=1`, which only the baked image sets; in
+  local dev (env unset) every `/web/*` asset is served `no-store`, so edits show on reload.
 
 Operational notes:
 

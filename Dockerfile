@@ -29,6 +29,11 @@ COPY data/malaria.db ./data/malaria.db
 # and config.PROJECT_ROOT points at /app (its data/ dir is where the geocode cache is written).
 RUN uv sync --frozen --no-dev
 
+# Opt this baked image into far-future immutable caching of /web/* assets. The image is the
+# unit of versioning (a rebake is a new deploy), so the cache never needs purging. Left unset
+# in local dev, where the same files change in place and must stay uncached (cache_headers.py).
+ENV IMMUTABLE_ASSETS=1
+
 # Runtime-written geocode cache. Defaulted to a path meant for a mounted volume, so attaching
 # a Railway volume at /app/var persists it across deploys with no extra config. Without a
 # volume this is ephemeral, which is harmless (the cache rebuilds from GeoNames on demand).

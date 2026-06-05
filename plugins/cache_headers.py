@@ -10,10 +10,17 @@ headers on /web/* responses only:
   - no-cache for index.html (and any other html), the single entry point that names the
     current asset URLs and must always be revalidated.
 
+Immutable caching is only correct for the baked image, where every asset change ships as a
+new deploy under a new image. In local dev the same files change in place under the same URL,
+so an immutable cache pins stale assets in the browser. The serving image opts in by setting
+IMMUTABLE_ASSETS=1 (see Dockerfile); absent it (dev), every /web/* asset goes out no-store so
+edits to app.js / index.html show on the next reload.
+
 Everything outside /web/ passes through untouched, so this never clobbers the
 max-age=31536000 headers datasette-hashed-urls sets on the /malaria-<hash> API.
 """
 
+import os
 from functools import wraps
 
 from datasette import hookimpl
@@ -21,12 +28,20 @@ from datasette import hookimpl
 STATIC_PREFIX = "/web/"
 IMMUTABLE = b"public, max-age=31536000, immutable"
 NO_CACHE = b"no-cache"
+NO_STORE = b"no-store"
+
+# Default-safe: immutable caching is opt-in, so forgetting the env in dev costs freshness
+# checks, never correctness. Only the baked serving image sets IMMUTABLE_ASSETS=1.
+IMMUTABLE_ENABLED = os.environ.get("IMMUTABLE_ASSETS") == "1"
 
 
 def _cache_value(path: str) -> bytes | None:
     """Return the Cache-Control value for a static path, or None to leave the response alone."""
     if not path.startswith(STATIC_PREFIX):
         return None
+    if not IMMUTABLE_ENABLED:
+        # Dev: never let the browser hold an asset across an edit.
+        return NO_STORE
     if path.endswith((".geojson", ".js")):
         return IMMUTABLE
     # index.html, the bare /web/, and anything else under the mount: revalidate every time.

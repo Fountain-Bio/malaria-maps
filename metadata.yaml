@@ -51,6 +51,7 @@ databases:
         facets: [tier, polarity]
       deferral_rule:
         title: FDA deferral rules (regulatory reference)
+        facets: [exposure_type, pathogen_reduction]
       fetch_run:
         title: Collection provenance
         sort_desc: collection_date
