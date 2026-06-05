@@ -89,6 +89,21 @@ function field(k, html) {
   return `<div class="field"><div class="k">${k}</div><div class="v">${html}</div></div>`;
 }
 
+// PR is a per-verdict modifier, not a standalone rule. A travel deferral (3-month, §IV.B.1)
+// is PR-eligible for platelets/plasma; residence (>5 yr) and prior malaria are the 3-year
+// categories with no PR alternative. Both lines can apply at once (e.g. an endemic country).
+function prLines(d) {
+  const out = [];
+  if (d.travel === "yes" || d.travel === "areas") {
+    out.push(["yes", "<b>Travel:</b> pathogen-reduced platelets/plasma may be collected without " +
+      "the 3-month deferral (FDA §IV.B.1). No PR device exists for whole blood / red cells."]);
+  }
+  if (d.residence) {
+    out.push(["no", "<b>Residence (&gt;5 yr):</b> no pathogen-reduction alternative (FDA §IV.B.2)."]);
+  }
+  return out;
+}
+
 function renderPanel(d) {
   const body = document.getElementById("panel-body");
   document.getElementById("panel").classList.add("open");
@@ -98,6 +113,9 @@ function renderPanel(d) {
   let h = `<h2>${d.title}</h2>`;
   h += `<div class="verdict-row"><span class="vbadge ${rcls}">${rlabel}</span>` +
     `<span class="vbadge ${tcls}">${tlabel}</span></div>`;
+  const prs = prLines(d);
+  if (prs.length) h += `<div class="pr-row">` + prs.map(([k, t]) =>
+    `<div class="pr-line pr-line-${k}"><span class="dot"></span><span>${t}</span></div>`).join("") + `</div>`;
   const meta = [];
   if (d.confidence) meta.push(`confidence: ${d.confidence}`);
   if (d.elevation != null) meta.push(`${d.elevation} m`);
@@ -259,8 +277,23 @@ const RULE_TITLES = {
   residence_reeligibility: "Re-eligibility after residence",
   travel_to_endemic_area: "Travel to an endemic area",
   history_of_malaria: "History of malaria",
+  pathogen_reduction_alternative: "Pathogen reduction (alternative to deferral)",
   testing_transition: "Testing transition",
 };
+const PR_PILL = {
+  authorized: ["pr-yes", "PR alternative"],
+  not_authorized: ["pr-no", "No PR alternative"],
+};
+function humanize(code) {
+  const s = (code || "").replace(/_/g, " ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function deferLabel(win) {
+  if (!win) return "";
+  if (/^none/i.test(win)) return "No deferral";
+  const m = win.match(/(\d+)\s*(month|year)/i);
+  return m ? `Defer ${m[1]} ${m[2][0] === "m" || m[2][0] === "M" ? "mo" : "yr"}` : win;
+}
 let rulesLoaded = false;
 
 async function openRules() {
@@ -270,14 +303,51 @@ async function openRules() {
   const rules = await fetch("/malaria/deferral_rule.json?_shape=array")
     .then((r) => r.json()).catch(() => []);
   if (!rules.length) { body.textContent = "Could not load rules."; return; }
-  body.innerHTML = rules.map((r) => `
-    <div class="rule">
-      <div class="rule-h">${RULE_TITLES[r.code] || r.code}</div>
-      <div class="rule-d">${r.description}</div>
-      ${r.threshold ? `<div class="rule-m"><b>Threshold:</b> ${r.threshold}</div>` : ""}
-      ${r.deferral_window ? `<div class="rule-m"><b>Window:</b> ${r.deferral_window}</div>` : ""}
-      ${r.citation ? `<div class="rule-c">${r.citation}</div>` : ""}
-    </div>`).join("");
+
+  const byCode = Object.fromEntries(rules.map((r) => [r.code, r]));
+  const MATRIX_CODES = ["travel_to_endemic_area", "residence_over_5yr", "history_of_malaria"];
+  const META_CODES = ["endemic_definition", "residence_reeligibility", "testing_transition"];
+
+  // Deferral categories as a scannable matrix: exposure × deferral window × PR alternative.
+  const mxRows = MATRIX_CODES.map((code) => {
+    const r = byCode[code];
+    if (!r) return "";
+    const pr = PR_PILL[r.pathogen_reduction];
+    const prCell = pr
+      ? `<span class="pill ${pr[0]}"><span class="dot"></span>${pr[1]}</span>`
+      : `<span class="mx-na">—</span>`;
+    return `<div class="mx-row" role="row">` +
+      `<span class="mx-cat" role="cell">${RULE_TITLES[code] || humanize(code)}</span>` +
+      `<span class="mx-win" role="cell">${deferLabel(r.deferral_window) || "—"}</span>` +
+      `<span class="mx-pr" role="cell">${prCell}</span></div>`;
+  }).join("");
+  const matrix = `<div class="matrix" role="table" aria-label="Deferral categories">` +
+    `<div class="mx-head" role="row"><span role="columnheader">Exposure</span>` +
+    `<span role="columnheader">Deferral</span><span role="columnheader">PR alternative</span></div>` +
+    mxRows + `</div>`;
+
+  // Short PR explainer; the canonical full regulatory text is disclosed on demand.
+  const prRule = byCode["pathogen_reduction_alternative"];
+  const prExplain = prRule ? `<div class="pr-explain">` +
+    `<p class="pr-sum">Pathogen reduction substitutes for the <b>travel</b> deferral only — ` +
+    `platelets/plasma, never whole blood or red cells.</p>` +
+    `<details class="pr-details"><summary>Full regulatory text</summary>` +
+    `<p class="rule-d">${prRule.description}</p>` +
+    (prRule.threshold ? `<p class="rule-m"><b>Threshold:</b> ${prRule.threshold}</p>` : "") +
+    (prRule.citation ? `<p class="rule-c">${prRule.citation}</p>` : "") +
+    `</details></div>` : "";
+
+  const metaCards = META_CODES.map((code) => {
+    const r = byCode[code];
+    if (!r) return "";
+    return `<article class="def"><h4 class="def-h">${RULE_TITLES[code] || humanize(code)}</h4>` +
+      `<p class="def-d">${r.description}</p>` +
+      (r.citation ? `<p class="rule-c">${r.citation}</p>` : "") + `</article>`;
+  }).join("");
+
+  body.innerHTML =
+    `<h3 class="sec-h">Deferral categories</h3>${matrix}${prExplain}` +
+    `<h3 class="sec-h">Definitions &amp; status</h3>${metaCards}`;
   rulesLoaded = true;
 }
 

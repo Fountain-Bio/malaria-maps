@@ -66,11 +66,11 @@ def _seed_rules(conn: db.sqlite3.Connection) -> None:
     for r in rules:
         conn.execute(
             "INSERT INTO deferral_rule(source_id, code, exposure_type, geo_scope, threshold, "
-            "deferral_window, description, citation, valid_from, valid_to) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            "deferral_window, pathogen_reduction, description, citation, valid_from, valid_to) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (sid, r["code"], r.get("exposure_type"), r.get("geo_scope"), r.get("threshold"),
-             r.get("deferral_window"), r["description"], r.get("citation"),
-             r.get("valid_from"), r.get("valid_to")),
+             r.get("deferral_window"), r.get("pathogen_reduction"), r["description"],
+             r.get("citation"), r.get("valid_from"), r.get("valid_to")),
         )
 
 
