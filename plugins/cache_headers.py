@@ -17,7 +17,7 @@ IMMUTABLE_ASSETS=1 (see Dockerfile); absent it (dev), every /web/* asset goes ou
 edits to app.js / index.html show on the next reload.
 
 Everything outside /web/ passes through untouched, so this never clobbers the
-max-age=31536000 headers datasette-hashed-urls sets on the /malaria-<hash> API.
+Cache-Control Datasette sets on the /malaria API (default_cache_ttl).
 """
 
 import os

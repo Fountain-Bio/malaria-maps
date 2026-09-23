@@ -7,9 +7,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# /-/versions.json returns 200 and never redirects. /malaria 302-redirects under
-# datasette-hashed-urls, and the /malaria-<hash> path changes every rebake, so neither
-# is usable as a stable healthcheck.
+# /-/versions.json is a cheap 200 that doesn't touch the database.
 healthcheckPath = "/-/versions.json"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

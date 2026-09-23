@@ -47,6 +47,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asgi-gzip"
+version = "0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/1c/253414da2384f2afe93370e1ac8117e167780fc4a0c6bd6f3c4011e69a91/asgi_gzip-0.3.tar.gz", hash = "sha256:e388bb804e430dd2ebd15fec72692d9d88ec1828d319a91e77f521982670b3f2", size = 4368, upload-time = "2026-04-09T03:57:22.943Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/21/b1d7a38aba8e71a7d2a595ae9aa77cf7c0e565f37dbe44739acb1baadd2b/asgi_gzip-0.3-py3-none-any.whl", hash = "sha256:fcde1776c5217dbe4f486e5d53d5f56dd287a92432c2c262be00aad63116b5f4", size = 5225, upload-time = "2026-04-09T03:57:21.528Z" },
+]
+
+[[package]]
 name = "asgiref"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -129,15 +138,16 @@ wheels = [
 ]
 
 [[package]]
-name = "datasette-hashed-urls"
-version = "0.4"
+name = "datasette-gzip"
+version = "0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "asgi-gzip" },
     { name = "datasette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/be/ac/f991e3c41f6e935968c0ba5def91571ed69c97273568b77dadc488141ec3/datasette-hashed-urls-0.4.tar.gz", hash = "sha256:f6f9d69f9a4bd65947489b9a10f8143882abee444e24013bbc1cd430932c1358", size = 8295, upload-time = "2022-03-24T20:53:17.419Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/a0/fec574e7b4bcb175315700789ea8952e99b2188426ec0b32888da96e338b/datasette_gzip-0.3.tar.gz", hash = "sha256:9458742239f09f7f3cfe6dde90f78ec4612be978c2277b37577166c9d68c6fe6", size = 1457, upload-time = "2026-04-09T04:05:06.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/51/80b6de42f85ffdcde2474977fc3ab4987e24379d8d2aa658897aed2589a1/datasette_hashed_urls-0.4-py3-none-any.whl", hash = "sha256:b719001a4c8a5c39cf654dd595df2d1ee93ede52253dbec7098c5a4631b80588", size = 8863, upload-time = "2022-03-24T20:53:16.297Z" },
+    { url = "https://files.pythonhosted.org/packages/af/dd/c598e0e9df106d75d95fbb4018022dce56fe53a0a638c8003cd880002739/datasette_gzip-0.3-py3-none-any.whl", hash = "sha256:12e09813d3bcf61185a1809f65492a383b772d48b7bef5b8d1fae2e4f33fd3e1", size = 2316, upload-time = "2026-04-09T04:05:05.819Z" },
 ]
 
 [[package]]
@@ -276,7 +286,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "datasette" },
-    { name = "datasette-hashed-urls" },
+    { name = "datasette-gzip" },
     { name = "datasette-render-html" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -293,7 +303,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "datasette", specifier = ">=0.64" },
-    { name = "datasette-hashed-urls", specifier = ">=0.4" },
+    { name = "datasette-gzip", specifier = ">=0.3" },
     { name = "datasette-render-html", specifier = ">=1.0" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "pydantic", specifier = ">=2.7" },

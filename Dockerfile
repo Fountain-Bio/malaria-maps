@@ -7,9 +7,8 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
-# Datasette resolves /malaria-<hash> from the DB content hash and serves the whole API
-# with a one-year immutable cache header (datasette-hashed-urls). Restart on a new DB ->
-# new hash -> new URLs, so caches we don't control never serve stale data.
+# The API is served at the stable /malaria path with a one-hour Cache-Control TTL, so a
+# rebaked DB is visible everywhere within the hour and URLs never change between builds.
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
@@ -43,7 +42,8 @@ ENV GEOCODE_CACHE_PATH=/app/var/geocode_cache.sqlite
 ENV PORT=8765
 EXPOSE 8765
 
-# -i opens malaria.db immutable (required for hashed-urls). The plugins dir loads both the
-# locate endpoint and the static cache-header plugin; datasette-hashed-urls loads via its
-# entry point. Bind 0.0.0.0 so the container is reachable.
-CMD ["sh", "-c", "uv run --no-sync datasette -i data/malaria.db -m metadata.yaml --static web:web/ --plugins-dir plugins -h 0.0.0.0 -p ${PORT}"]
+# -i opens malaria.db immutable (read-only, no locking). The plugins dir loads the locate
+# endpoint, cache headers, robots.txt, sitemap.xml, legacy-URL redirects and the AI crawler
+# rate limit; datasette-gzip loads via its entry point. Bind 0.0.0.0 so the container is
+# reachable.
+CMD ["sh", "-c", "uv run --no-sync datasette -i data/malaria.db -m metadata.yaml --static web:web/ --plugins-dir plugins --setting default_cache_ttl 3600 -h 0.0.0.0 -p ${PORT}"]
