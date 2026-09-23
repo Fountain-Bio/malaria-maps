@@ -31,3 +31,8 @@ def load_env(path: Path | None = None) -> None:
 def geonames_username() -> str | None:
     load_env()
     return os.environ.get("GEONAMES_USERNAME")
+
+
+# Public origin used for absolute URLs in robots.txt and sitemap.xml, which crawlers
+# require. Override with SITE_URL for another host (e.g. a staging domain).
+SITE_URL = os.environ.get("SITE_URL", "https://malariatracker.com").rstrip("/")

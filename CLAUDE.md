@@ -55,4 +55,4 @@ Datasette is configured by `metadata.yaml`: facets, FTS5 (`malaria_fts`, rebuilt
 - Plain stdlib `sqlite3` (no ORM); the SCD2 close/open SQL is intentionally explicit in `db.py`. Schema lives in `schema.sql` and is applied via `db.init_schema`.
 - Pydantic models in `models.py` separate the raw CDC payload from the derived classification; the derived model owns the canonical-JSON hashing contract.
 - `reference/fda_rules.json` seeds the `deferral_rule` table as versioned regulatory reference; rules carry `valid_from`/`valid_to` so a future testing-based FDA model can be added without redesign.
-- Lean dependencies only (`httpx`, `selectolax`, `pydantic`, `zstandard`, `datasette` + render plugin). `data/raw/` is gitignored; `data/malaria.db` is committed as the versioned deliverable (checkpoint the WAL before committing it).
+- Lean dependencies only (`httpx`, `selectolax`, `pydantic`, `zstandard`, `datasette` + render and gzip plugins). `data/raw/` is gitignored; `data/malaria.db` is committed as the versioned deliverable (checkpoint the WAL before committing it).

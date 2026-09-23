@@ -14,14 +14,9 @@ license_url: https://www.cdc.gov/other/agencymaterials.html
 source: CDC Travelers' Health (Yellow Fever & Malaria, by country)
 source_url: https://wwwnc.cdc.gov/travel/Services/xmlservices.asmx/YellowFeverInformationJson
 
-# Behind a CDN, the API (/malaria-<hash>/...) is served immutable for a year by
-# datasette-hashed-urls (requires the DB opened with -i). The hash is of the DB contents,
-# so a weekly rebuild changes every URL and old cache entries are simply never requested
-# again. No purge is needed. Static web/ assets get their headers from the cache_headers
-# plugin instead, since hashed-urls only covers database mounts.
-plugins:
-  datasette-hashed-urls:
-    max_age: 31536000
+# Behind a CDN, the API is served at the stable /malaria path with a one-hour cache TTL
+# (--setting default_cache_ttl in the Dockerfile), so a weekly rebake is visible within the
+# hour. Static web/ assets get their headers from the cache_headers plugin instead.
 
 databases:
   malaria:
@@ -46,6 +41,14 @@ databases:
         facets: [change_type]
       malaria_record:
         title: Versioned malaria records (full history)
+        plugins:
+          datasette-render-html:
+            columns:
+              - area_of_risk_html
+              - relative_risk_html
+              - recommended_prophylaxis_html
+              - species_html
+              - chloroquine_resist_html
       area_statement:
         title: Parsed sub-national area statements
         facets: [tier, polarity]

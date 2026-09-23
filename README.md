@@ -132,20 +132,32 @@ The serving side is packaged as a baked, read-only image. `data/malaria.db` is c
 the image and opened immutable (`-i`), so each deploy is a fixed snapshot that a CDN can cache
 hard. `Dockerfile` installs deps with uv and runs Datasette against that immutable DB with the
 `web/` static mount and the local plugins dir. `railway.toml` selects the Dockerfile builder
-and health-checks `/-/versions.json` (a plain 200; `/malaria` 302-redirects under hashed URLs,
-so it isn't a stable check). It runs a single replica.
+and health-checks `/-/versions.json` (a cheap 200). It runs a single replica.
 
 Caching is designed so no cache purge is ever required, which matters because intermediate
 caches between the CDN and the browser can't be purged:
 
-- The API is served under `/malaria-<hash>/…` by `datasette-hashed-urls` with a one-year
-  `Cache-Control: max-age=31536000, public`. The hash is of the DB contents, so a rebake
-  changes every URL and stale entries simply stop being requested. Unhashed `/malaria/…`
-  paths 302 to the current hash.
+- The API is served at the stable `/malaria/…` path with a one-hour
+  `Cache-Control: max-age=3600` (`--setting default_cache_ttl`), so a rebake is visible
+  everywhere within the hour. Responses are gzipped (`datasette-gzip`). Old
+  `/malaria-<hash>/…` links from the former hashed-URL scheme 301 to `/malaria/…`
+  (`plugins/legacy_urls.py`).
 - Static assets get headers from `plugins/cache_headers.py`: `world.geojson` and `app.js`
   go out immutable for a year, while `index.html` is `no-cache` so it always revalidates.
   Immutable caching is gated on `IMMUTABLE_ASSETS=1`, which only the baked image sets; in
   local dev (env unset) every `/web/*` asset is served `no-store`, so edits show on reload.
+
+Crawlers:
+
+- `/robots.txt` (`plugins/robots.py`) lets crawlers index the landing page, map, table
+  pages and row pages, and keeps them out of query-string variants (facets, sorts,
+  pagination, SQL), `.json`/`.csv` exports and `/-/locate`, except the JSON the map needs
+  to render.
+- `/sitemap.xml` (`plugins/sitemap.py`) lists those pages plus one per country (its current
+  `malaria_record` row).
+- AI training crawlers (`meta-externalagent`, `GPTBot`, `ClaudeBot`, `CCBot`, `Bytespider`,
+  `Amazonbot`) get `AI_CRAWLER_RPM` requests per minute each (default 30), then a 429
+  (`plugins/crawler_limit.py`). Search crawlers and link-preview bots are never limited.
 
 Operational notes:
 
