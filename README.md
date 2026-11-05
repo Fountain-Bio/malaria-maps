@@ -142,6 +142,12 @@ caches between the CDN and the browser can't be purged:
   everywhere within the hour. Responses are gzipped (`datasette-gzip`). Old
   `/malaria-<hash>/…` links from the former hashed-URL scheme 301 to `/malaria/…`
   (`plugins/legacy_urls.py`).
+- Every API request is served as anonymous (`plugins/anonymous_caching.py`). Datasette
+  answers a request that carries a cookie with `private, no-store` and adds
+  `Vary: Cookie, Authorization` to every response, and the CDN caches neither. The plugin
+  drops the Cookie and Authorization request headers and removes them from `Vary`, so
+  visitors holding the edge's browser-check clearance cookie or analytics cookies still
+  get the shared, cacheable response. The site has no logins, so nothing personal is lost.
 - Static assets get headers from `plugins/cache_headers.py`: `world.geojson` and `app.js`
   go out immutable for a year, while `index.html` is `no-cache` so it always revalidates.
   Immutable caching is gated on `IMMUTABLE_ASSETS=1`, which only the baked image sets; in

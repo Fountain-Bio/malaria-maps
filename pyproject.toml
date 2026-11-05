@@ -8,7 +8,9 @@ dependencies = [
     "selectolax>=0.3.21",
     "pydantic>=2.7",
     "zstandard>=0.22",
-    "datasette>=0.64",
+    # Datasette 1.0 moves facets, canned queries and plugin settings out of the
+    # metadata.yaml served with -m, so lifting this cap means migrating that file.
+    "datasette>=0.65.5,<1.0",
     "datasette-render-html>=1.0",
     "datasette-gzip>=0.3",
 ]

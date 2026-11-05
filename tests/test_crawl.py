@@ -58,6 +58,21 @@ def test_stable_path_serves_directly_gzipped():
     assert "accept-encoding" in resp.headers["vary"].lower()
 
 
+def test_requests_with_cookies_stay_cacheable_at_the_edge():
+    # Datasette marks any request with a cookie as private and varies every response on Cookie;
+    # Railway's CDN stores neither. The edge's browser-check clearance cookie and analytics
+    # cookies arrive on ordinary visits, so the API must stay public and shareable anyway.
+    headers = {"cookie": "cf_clearance=abc; _ga=GA1.1.1", "accept-encoding": "gzip"}
+    for path in ("/malaria/country_current.json", "/malaria/v_malaria_current", "/malaria"):
+        resp = _get(path, headers=headers)
+        assert resp.status_code == 200, path
+        cache_control = resp.headers["cache-control"]
+        assert "max-age=" in cache_control and "private" not in cache_control, (path, cache_control)
+        vary = [part.strip().lower() for part in resp.headers["vary"].split(",")]
+        assert "cookie" not in vary and "authorization" not in vary, (path, vary)
+        assert "accept-encoding" in vary, (path, vary)
+
+
 def test_crawler_family_matches_ai_crawlers_only():
     meta = "Mozilla/5.0 (compatible; meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))"
     assert crawler_limit.crawler_family(meta) == "meta-externalagent"
