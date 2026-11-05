@@ -134,3 +134,38 @@ def test_country_wide_all_areas_keeps_scope_all():
 def test_throughout_the_country_keeps_scope_all():
     s = parse_area_statements("<ul><li>Throughout the country including the capital</li></ul>")
     assert s[0].scope == "all"
+
+
+def test_parser_reproduces_every_current_record_in_the_committed_db():
+    # The committed DB stores each country's verbatim CDC HTML next to the content_hash the
+    # parser derived from it at collection time. Re-deriving every current record must give the
+    # same hash, so an HTML-parser or parsing-rule change that would silently reclassify a
+    # country fails here. If a change is intentional, re-run the collector so the stored
+    # derived columns match the parser, then update the endemic count below if CDC's list moved.
+    import sqlite3
+    from pathlib import Path
+
+    db = Path(__file__).resolve().parents[1] / "data" / "malaria.db"
+    conn = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    rows = conn.execute(
+        "SELECT c.display_name, mr.has_transmission, mr.area_of_risk_html, mr.relative_risk_html,"
+        " mr.chloroquine_resist_html, mr.species_html, mr.recommended_prophylaxis_html, mr.content_hash"
+        " FROM malaria_record mr JOIN country c USING (country_id) WHERE mr.is_current = 1"
+    ).fetchall()
+    conn.close()
+    assert rows
+
+    mismatched, endemic, transmission = [], 0, 0
+    for name, has_tx, area, risk, cq, species, prophylaxis, stored_hash in rows:
+        derived = derive_malaria(CdcMalaria(
+            HasTransmission=bool(has_tx), AreaOfRisk=area, RelativeRisk=risk,
+            ChloroquineResistance=cq, Species=species, RecommendedProphylaxis=prophylaxis,
+        ))
+        if derived.content_hash() != stored_hash:
+            mismatched.append(name)
+        endemic += derived.is_endemic
+        transmission += derived.has_transmission
+
+    assert not mismatched, f"parser output differs from the stored record for: {mismatched}"
+    # CLAUDE.md: of 90 transmission countries only 83 have recommended chemoprophylaxis.
+    assert (endemic, transmission) == (83, 90)

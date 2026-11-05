@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser
 
 from .models import AreaStatement, CdcMalaria, CdcYellowFever, MalariaDerived, YellowFeverDerived
 
@@ -32,17 +32,23 @@ MONTHS = ("january", "february", "march", "april", "may", "june", "july",
 NO_PROPHYLAXIS = "no chemoprophylaxis recommended"
 
 
+def _parse_fragment(fragment: str) -> LexborHTMLParser:
+    # Each CDC field value is a bare HTML fragment (a <ul> or loose text). Fragment mode parses
+    # it the way a browser parses a DocumentFragment, adding no <html>/<head>/<body> elements.
+    return LexborHTMLParser(fragment, is_fragment=True)
+
+
 def strip_html(fragment: str | None) -> str:
     if not fragment:
         return ""
-    return HTMLParser(fragment).text(separator=" ").strip()
+    return _parse_fragment(fragment).text(separator=" ").strip()
 
 
 def list_items(fragment: str | None) -> list[str]:
     """Return the text of each <li>; fall back to the whole stripped text if no list."""
     if not fragment:
         return []
-    tree = HTMLParser(fragment)
+    tree = _parse_fragment(fragment)
     items = [li.text(separator=" ").strip() for li in tree.css("li")]
     items = [" ".join(i.split()) for i in items if i.strip()]
     if items:

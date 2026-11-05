@@ -124,7 +124,9 @@ uv run ruff check    # static analysis (E/F/I/UP/B/SIM/C4)
 ```
 
 Covers parser tiering (Afghanistan/Botswana/Syria/Greece), content-hash stability,
-collector idempotency, SCD2 version open/close, the change feed, removals, and as-of queries.
+re-deriving every current record in the committed DB to its stored hash (83 endemic of 90
+transmission countries), collector idempotency, SCD2 version open/close, the change feed,
+removals, and as-of queries.
 
 ## Deploy (Railway)
 
