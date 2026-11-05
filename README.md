@@ -136,11 +136,13 @@ single replica, and mounts the geocode-cache volume at `/app/var`. To change it,
 `npm install` in `.railway/`, then `railway config plan` and `railway config apply` from a
 checkout linked to the "malaria maps" project. Service variables stay outside that file.
 
-At Railway's edge, an edge rule shows a browser check on the full-history table
-(`/malaria/malaria_record` and its `.json`/`.csv`) and the current-state table page and CSV.
-Visitors pass it once. Scripts can't, which keeps distributed scrapers that rotate IPs and
-browser user agents off the most expensive pages. The rule lives in the service's Edge
-settings; the map's JSON feeds and the per-row pages are not covered by it.
+Railway's edge enforces the same public surface before requests reach the container. One
+edge rule allows the exact paths in `PUBLIC_ROUTES` (`plugins/map_only.py`) and a second
+blocks every other path with a 404, so scrapers hitting the retired explorer URLs cost the
+app nothing. The rules live in the service's Edge settings, set through Railway's
+`updateServiceEdgeRules` API. Edge rules match paths only, so query-parameter checks stay in
+`map_only.py`. When a path is added to `PUBLIC_ROUTES`, add it to the edge allow rule too, or
+the edge will 404 it.
 
 Caching is designed so no cache purge is ever required, which matters because intermediate
 caches between the CDN and the browser can't be purged:
