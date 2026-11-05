@@ -139,6 +139,12 @@ single replica, and mounts the geocode-cache volume at `/app/var`. To change it,
 `npm install` in `.railway/`, then `railway config plan` and `railway config apply` from a
 checkout linked to the "malaria maps" project. Service variables stay outside that file.
 
+At Railway's edge, an edge rule shows a browser check on the full-history table
+(`/malaria/malaria_record` and its `.json`/`.csv`) and the current-state table page and CSV.
+Visitors pass it once. Scripts can't, which keeps distributed scrapers that rotate IPs and
+browser user agents off the most expensive pages. The rule lives in the service's Edge
+settings; the map's JSON feeds and the per-row pages are not covered by it.
+
 Caching is designed so no cache purge is ever required, which matters because intermediate
 caches between the CDN and the browser can't be purged:
 
