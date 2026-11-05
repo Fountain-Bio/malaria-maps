@@ -32,11 +32,11 @@ def test_handler_serves_plain_text_200():
     assert resp.body == robots.ROBOTS_TXT
 
 
-def test_policy_blocks_the_crawl_trap_not_the_pages():
+def test_policy_allows_only_the_map_and_its_data():
     body = robots.ROBOTS_TXT
     assert "User-agent: *" in body
-    assert "Disallow: /\n" not in body          # pages themselves are crawlable
-    for rule in ("Disallow: /*?", "Disallow: /*.json", "Disallow: /*.csv", "Disallow: /-/"):
-        assert rule in body                     # facets/sorts/pagination/SQL, exports, /-/locate
-    assert "Allow: /malaria/country_current.json" in body  # the map's data, for rendering crawlers
+    assert "Disallow: /\n" in body                        # everything but the map
+    assert "Allow: /$" in body and "Allow: /web/" in body  # the map page and its assets
+    for feed in ("country_current", "v_malaria_current", "deferral_rule"):
+        assert f"Allow: /malaria/{feed}.json" in body      # the map's data, for rendering crawlers
     assert "Sitemap: https://" in body and body.rstrip().endswith("/sitemap.xml")

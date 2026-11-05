@@ -28,7 +28,7 @@ function fold(s) {
 
 map.on("load", async () => {
   const [geo, rows] = await Promise.all([
-    fetch("world.geojson").then((r) => r.json()),
+    fetch("/web/world.geojson").then((r) => r.json()),
     fetch("/malaria/country_current.json?_shape=array&_size=max").then((r) => r.json()),
   ]);
   countryRows = rows;
@@ -133,10 +133,6 @@ function renderPanel(d) {
         `<span class="chip" data-gid="${a.geoname_id}">${a.name}, ${a.admin1 || a.country_name}</span>`
       ).join("") + `</div></div>`;
   }
-  const links = [];
-  if (d.iso2) links.push(`<a href="/malaria/v_malaria_current?iso2=${d.iso2}">Full record</a>`);
-  if (d.display_name) links.push(`<a href="/malaria/country_history?country=${encodeURIComponent(d.display_name)}">History</a>`);
-  if (links.length) h += `<div class="links">${links.join("")}</div>`;
   if (d.updated) h += `<div class="updated">CDC updated ${d.updated}</div>`;
   if (d.scope === "city") h += `<div class="geo-credit">Geocoding: GeoNames (CC BY)</div>`;
 

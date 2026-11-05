@@ -5,10 +5,11 @@ heaviest asset we ship (web/world.geojson) effectively uncacheable behind a CDN.
 headers on /web/* responses only:
 
   - far-future immutable for the content-stable assets (world.geojson, app.js). The baked
-    image is the unit of versioning: a rebuild that changes these files is a new deploy, so
-    a year-long immutable cache never needs purging.
-  - no-cache for index.html (and any other html), the single entry point that names the
-    current asset URLs and must always be revalidated.
+    image is the unit of versioning: a rebuild that changes these files is a new deploy, and
+    the map page at `/` (map_only.py) requests app.js under a hash of its contents, so a
+    year-long immutable cache never needs purging.
+  - no-cache for any html under the mount. The map page itself is served at `/` by
+    map_only.py, which sets its own no-cache header.
 
 Immutable caching is only correct for the baked image, where every asset change ships as a
 new deploy under a new image. In local dev the same files change in place under the same URL,

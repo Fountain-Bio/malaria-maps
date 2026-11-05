@@ -2,6 +2,7 @@
 
 import asyncio
 import importlib.util
+import re
 from pathlib import Path
 
 from datasette.app import Datasette
@@ -20,7 +21,12 @@ crawler_limit = _load("crawler_limit")
 
 
 def _get_all(paths, headers=None):
-    ds = Datasette(immutables=[str(ROOT / "data" / "malaria.db")], plugins_dir=str(ROOT / "plugins"))
+    # Mirrors the Dockerfile's serve command: immutable DB, the web/ static mount, the plugins dir.
+    ds = Datasette(
+        immutables=[str(ROOT / "data" / "malaria.db")],
+        plugins_dir=str(ROOT / "plugins"),
+        static_mounts=[("web", str(ROOT / "web"))],
+    )
 
     async def go():
         await ds.invoke_startup()
@@ -33,29 +39,73 @@ def _get(path, headers=None):
     return _get_all([path], headers)[0]
 
 
-def test_sitemap_lists_pages_and_one_row_per_country():
+def test_sitemap_lists_only_the_map_page():
     resp = _get("/sitemap.xml")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("application/xml")
-    body = resp.text
-    assert "<loc>https://malariatracker.com/web/index.html</loc>" in body
-    assert body.count("/malaria/malaria_record/") >= 200   # one current record per country
-    assert "<lastmod>" in body
+    assert resp.text.count("<loc>") == 1
+    assert "<loc>https://malariatracker.com/</loc>" in resp.text
 
 
-def test_legacy_hashed_urls_301_to_stable_path():
-    resp = _get("/malaria-35afc4b/malaria_record?_next=100")
-    assert resp.status_code == 301
-    assert resp.headers["location"] == "/malaria/malaria_record?_next=100"
-    assert "max-age" in resp.headers["cache-control"]
-    assert _get("/malaria-35afc4b").headers["location"] == "/malaria"
-
-
-def test_stable_path_serves_directly_gzipped():
-    resp = _get("/malaria/malaria_record", headers={"accept-encoding": "gzip"})
+def test_root_serves_the_map_with_a_versioned_app_js():
+    resp = _get("/")
     assert resp.status_code == 200
-    assert resp.headers["content-encoding"] == "gzip"
-    assert "accept-encoding" in resp.headers["vary"].lower()
+    assert "<h1>Malaria Region Tracker</h1>" in resp.text
+    assert re.search(r'src="/web/app\.js\?v=[0-9a-f]{12}"', resp.text)
+    assert resp.headers["cache-control"] == "no-cache"
+    version = re.search(r"app\.js\?v=([0-9a-f]{12})", resp.text).group(1)
+    assert _get(f"/web/app.js?v={version}").status_code == 200
+
+
+def test_old_map_url_redirects_to_root():
+    for path in ("/web/index.html", "/web/"):
+        resp = _get(path)
+        assert resp.status_code == 301, path
+        assert resp.headers["location"] == "/"
+
+
+def test_map_feeds_serve_the_parameters_the_map_sends():
+    paths = [
+        "/malaria/country_current.json?_shape=array&_size=max",
+        "/malaria/v_malaria_current.json?_shape=array&iso3=AFG",
+        "/malaria/deferral_rule.json?_shape=array",
+        "/web/world.geojson",
+        "/-/versions.json",
+        "/robots.txt",
+    ]
+    for path, resp in zip(paths, _get_all(paths), strict=True):
+        assert resp.status_code == 200, path
+    afg = _get("/malaria/v_malaria_current.json?_shape=array&iso3=AFG").json()
+    assert len(afg) == 1 and afg[0]["iso3"] == "AFG"
+
+
+def test_explorer_and_exports_are_gone():
+    paths = [
+        "/malaria",
+        "/malaria/malaria_record",
+        "/malaria/malaria_record.csv",
+        "/malaria/malaria_record.json",
+        "/malaria/v_malaria_current",
+        "/malaria/v_malaria_current.csv",
+        "/malaria/malaria_record/1",
+        "/malaria/country_history?country=Afghanistan",
+        "/malaria?sql=select+1",
+        "/malaria.db",
+        "/malaria-35afc4b/v_malaria_current",
+        "/-/metadata",
+    ]
+    for path, resp in zip(paths, _get_all(paths), strict=True):
+        assert resp.status_code == 404, path
+        assert "max-age=3600" in resp.headers["cache-control"], path
+
+
+def test_map_feeds_refuse_other_query_parameters():
+    for path in (
+        "/malaria/country_current.json?_shape=array&_where=1%3D1",
+        "/malaria/v_malaria_current.json?_shape=array&_facet=screening_class",
+        "/malaria/deferral_rule.json?_shape=array&_sort=code",
+    ):
+        assert _get(path).status_code == 400, path
 
 
 def test_requests_with_cookies_stay_cacheable_at_the_edge():
@@ -63,7 +113,7 @@ def test_requests_with_cookies_stay_cacheable_at_the_edge():
     # Railway's CDN stores neither. The edge's browser-check clearance cookie and analytics
     # cookies arrive on ordinary visits, so the API must stay public and shareable anyway.
     headers = {"cookie": "cf_clearance=abc; _ga=GA1.1.1", "accept-encoding": "gzip"}
-    for path in ("/malaria/country_current.json", "/malaria/v_malaria_current", "/malaria"):
+    for path in ("/malaria/country_current.json?_shape=array", "/malaria/v_malaria_current.json?iso3=AFG"):
         resp = _get(path, headers=headers)
         assert resp.status_code == 200, path
         cache_control = resp.headers["cache-control"]

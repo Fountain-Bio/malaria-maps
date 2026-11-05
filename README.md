@@ -2,7 +2,7 @@
 
 A backend that tracks malaria endemic-region data for US blood-donor geographic deferral
 screening, built entirely from **public-domain CDC primary data**. It collects daily,
-versions every change, and serves a read-only API plus an explorable UI with a world map.
+versions every change, and serves a world map backed by a small read-only JSON feed.
 
 ## Why this exists
 
@@ -29,7 +29,7 @@ question, so they are not used to drive classification.
 ## Architecture
 
 ```
-CDC JSON endpoint ──> collect ──> versioned SQLite (data/malaria.db) ──> Datasette ──> API + UI + map
+CDC JSON endpoint ──> collect ──> versioned SQLite (data/malaria.db) ──> Datasette ──> map + its JSON feeds
    (daily)         parse + SCD2       history + change feed             read-only
                    + raw archive
 ```
@@ -54,34 +54,31 @@ uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --plugins-di
 
 Then open:
 
-- **Map:** http://127.0.0.1:8765/web/index.html — red = whole-country endemic, amber =
-  endemic in specific areas, grey = not endemic. Click a country for detail + history, or use
-  the **search box** to check whether a specific city is in a deferral geography.
-- **Datasette home:** http://127.0.0.1:8765/malaria
+- **Map:** http://127.0.0.1:8765/ — red = whole-country endemic, amber = endemic in
+  specific areas, grey = not endemic. Click a country for detail, or use the **search box**
+  to check whether a specific city is in a deferral geography.
+
+The map is the whole public site: `plugins/map_only.py` returns 404 for Datasette's table,
+row, query and SQL pages and its exports. To browse the full history, the change feed and the
+canned queries in `metadata.yaml` locally, run Datasette without the plugins dir:
+`uv run datasette data/malaria.db -m metadata.yaml`, then open http://127.0.0.1:8001/malaria.
 
 City lookup also works from the terminal: `uv run python -m malaria_tracker.locate "Nairobi"`.
 
 Run the collector daily (manual, or a local cron entry). It is idempotent: a second run the
 same day with an unchanged payload writes nothing.
 
-## API (read-only, via Datasette)
+## Public endpoints
 
-Every table, view, and canned query is available as JSON by appending `.json`
-(`?_shape=array` for a plain list).
+The map's data comes from three Datasette JSON feeds. Each accepts only the query parameters
+the map sends; any other parameter gets a 400, and every other path a 404.
 
 | Need | Endpoint |
 |---|---|
-| Current status, one row/country | `/malaria/v_malaria_current.json?_shape=array` |
 | Map feed (ISO3 + class) | `/malaria/country_current.json?_shape=array&_size=max` |
 | One country | `/malaria/v_malaria_current.json?_shape=array&iso3=AFG` |
-| Changes since a date | `/malaria/changes_since.json?since=2026-01-01&_shape=array` |
-| Endemic list as of a date | `/malaria/endemic_list_as_of.json?as_of=2026-01-01&_shape=array` |
-| Country version history | `/malaria/country_history.json?country=Afghanistan&_shape=array` |
-| Full-text area search | `/malaria/search_areas.json?q=gold+mining&_shape=array` |
-| Collection provenance | `/malaria/fetch_run.json?_shape=array` |
+| FDA deferral rules | `/malaria/deferral_rule.json?_shape=array` |
 | City deferral lookup | `/-/locate?q=Nairobi` (or `?geonameId=<id>`) |
-
-Datasette also gives faceted browse, FTS, and a read-only SQL box for ad-hoc queries.
 
 ### City lookup (`/-/locate`)
 
@@ -148,11 +145,13 @@ settings; the map's JSON feeds and the per-row pages are not covered by it.
 Caching is designed so no cache purge is ever required, which matters because intermediate
 caches between the CDN and the browser can't be purged:
 
-- The API is served at the stable `/malaria/…` path with a one-hour
+- The map page at `/` is `no-cache`, so it always revalidates. It loads `app.js` under a
+  hash of the file's contents (`/web/app.js?v=…`), so a deploy that changes `app.js` reaches
+  every browser even though the asset itself is cached as immutable.
+- The JSON feeds are served at the stable `/malaria/…` path with a one-hour
   `Cache-Control: max-age=3600` (`--setting default_cache_ttl`), so a rebake is visible
-  everywhere within the hour. Responses are gzipped (`datasette-gzip`). Old
-  `/malaria-<hash>/…` links from the former hashed-URL scheme 301 to `/malaria/…`
-  (`plugins/legacy_urls.py`).
+  everywhere within the hour. Responses are gzipped (`datasette-gzip`). The 404s and 400s
+  from `plugins/map_only.py` also carry a one-hour max-age, so the CDN answers repeats.
 - Every API request is served as anonymous (`plugins/anonymous_caching.py`). Datasette
   answers a request that carries a cookie with `private, no-store` and adds
   `Vary: Cookie, Authorization` to every response, and the CDN caches neither. The plugin
@@ -160,18 +159,16 @@ caches between the CDN and the browser can't be purged:
   visitors holding the edge's browser-check clearance cookie or analytics cookies still
   get the shared, cacheable response. The site has no logins, so nothing personal is lost.
 - Static assets get headers from `plugins/cache_headers.py`: `world.geojson` and `app.js`
-  go out immutable for a year, while `index.html` is `no-cache` so it always revalidates.
+  go out immutable for a year.
   Immutable caching is gated on `IMMUTABLE_ASSETS=1`, which only the baked image sets; in
   local dev (env unset) every `/web/*` asset is served `no-store`, so edits show on reload.
 
 Crawlers:
 
-- `/robots.txt` (`plugins/robots.py`) lets crawlers index the landing page, map, table
-  pages and row pages, and keeps them out of query-string variants (facets, sorts,
-  pagination, SQL), `.json`/`.csv` exports and `/-/locate`, except the JSON the map needs
-  to render.
-- `/sitemap.xml` (`plugins/sitemap.py`) lists those pages plus one per country (its current
-  `malaria_record` row).
+- `/robots.txt` (`plugins/robots.py`) allows the map page, its `/web/` assets and the three
+  JSON feeds a rendering crawler needs to draw the map, and disallows everything else,
+  including `/-/locate`.
+- `/sitemap.xml` (`plugins/sitemap.py`) lists the one page, `/`.
 - AI training crawlers (`meta-externalagent`, `GPTBot`, `ClaudeBot`, `CCBot`, `Bytespider`,
   `Amazonbot`) get `AI_CRAWLER_RPM` requests per minute each (default 30), then a 429
   (`plugins/crawler_limit.py`). Search crawlers and link-preview bots are never limited.
@@ -195,7 +192,7 @@ Build and check it locally:
 ```bash
 docker build -t malaria-tracker .
 docker run --rm -p 8899:8765 -e GEONAMES_USERNAME=your_user malaria-tracker
-# map: http://127.0.0.1:8899/web/index.html
+# map: http://127.0.0.1:8899/
 ```
 
 ## Scope and limitations

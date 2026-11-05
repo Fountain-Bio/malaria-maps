@@ -102,9 +102,6 @@
     .field .v, .field .v ul { font-size: 13.5px; color: var(--ink); line-height: 1.5; }
     .field .v ul { margin: 4px 0 0; padding-left: 18px; }
     .field .v li { margin-bottom: 3px; }
-    .links { margin-top: 18px; font-size: 12.5px; display: flex; gap: 14px; }
-    .links a { color: var(--accent); text-decoration: none; }
-    .links a:hover { text-decoration: underline; }
     .updated { color: var(--faint); font-size: 11.5px; margin-top: 16px; }
     .geo-credit { font-size: 10.5px; color: var(--faint); margin-top: 16px; }
 
@@ -173,8 +170,6 @@
     <div>
       <h1>Malaria Region Tracker</h1>
       <div class="sub">CDC chemoprophylaxis-based endemic classification &middot;
-        <a href="/malaria/v_malaria_current">table</a> &middot;
-        <a href="/malaria/change_event">changes</a> &middot;
         <span id="counts">loading…</span></div>
     </div>
     <form id="search" autocomplete="off">
@@ -202,6 +197,6 @@
     <div id="rules-body">loading…</div>
   </aside>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="app.js"></script>
+  <script src="/web/app.js"></script>
 </body>
 </html>

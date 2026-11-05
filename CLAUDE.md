@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A backend that tracks malaria endemic-region data for US blood-donor geographic deferral screening. It collects daily from CDC, versions every change into SQLite, and serves a read-only API plus an explorable UI with a world choropleth.
+A backend that tracks malaria endemic-region data for US blood-donor geographic deferral screening. It collects daily from CDC, versions every change into SQLite, and serves a world choropleth map backed by a small read-only JSON feed.
 
 ## Commands
 
@@ -18,9 +18,11 @@ uv run python -m malaria_tracker.collect --fixture tests/fixtures/cdc_yellowfeve
 #   --date YYYY-MM-DD override collection_date (the SCD2 valid_from anchor)
 #   --db <path>       target a different database file
 
-# Serve: read-only API + faceted UI + the map (Datasette opens the file read-only)
-uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --port 8765
-#   map: http://127.0.0.1:8765/web/index.html   home: http://127.0.0.1:8765/malaria
+# Serve the public site: the map at / and the JSON feeds it reads (Datasette opens the file read-only)
+uv run datasette data/malaria.db -m metadata.yaml --static web:web/ --plugins-dir plugins --port 8765
+#   map: http://127.0.0.1:8765/
+# Explore locally: without --plugins-dir, the full Datasette UI, canned queries and exports
+uv run datasette data/malaria.db -m metadata.yaml   # http://127.0.0.1:8001/malaria
 
 uv run pytest                                      # all tests
 uv run pytest tests/test_parse.py::test_botswana_partial_with_tiers   # a single test
@@ -36,7 +38,7 @@ The deferral definition is **"CDC recommends antimalarial chemoprophylaxis"** (F
 ## Data flow and architecture
 
 ```
-CDC JSON endpoint ──> collect.py ──> data/malaria.db (SCD2) ──> Datasette ──> API + UI + web/ map
+CDC JSON endpoint ──> collect.py ──> data/malaria.db (SCD2) ──> Datasette ──> map + its JSON feeds
    (daily)        parse.py + db.py     history + change feed
 ```
 
@@ -48,7 +50,9 @@ CDC JSON endpoint ──> collect.py ──> data/malaria.db (SCD2) ──> Data
 
 ## Serving and the map
 
-Datasette is configured by `metadata.yaml`: facets, FTS5 (`malaria_fts`, rebuilt each run from current records + verbatim area text), HTML rendering for the `*_html` columns, and canned queries (`changes_since`, `endemic_list_as_of`, `country_history`, `search_areas`). The map (`web/index.html` + `web/app.js`, MapLibre, no API key) fetches `/malaria/country_current.json` and the Natural Earth polygons in `web/world.geojson`, joins on ISO3, and opens a per-country detail panel fetched from `v_malaria_current`. Overseas territories with their own CDC entry (e.g. French Guiana) have ISO3 in the data but no separate 110m polygon, so they appear in the table/API but not as a distinct map fill.
+The public site is the map and nothing else. `plugins/map_only.py` serves `web/index.html` at `/`, passes only the map's `/web/` assets, its three JSON feeds (`country_current`, `v_malaria_current` by `iso3`, `deferral_rule`, each limited to the query parameters `web/app.js` sends), `/-/locate`, the `/-/versions.json` health check, `robots.txt`, `sitemap.xml` and the favicon, and returns 404 for every other path. When the map starts fetching something new, add it to `PUBLIC_ROUTES` there.
+
+Datasette is configured by `metadata.yaml`: facets, FTS5 (`malaria_fts`, rebuilt each run from current records + verbatim area text), HTML rendering for the `*_html` columns, and canned queries (`changes_since`, `endemic_list_as_of`, `country_history`, `search_areas`); those are reachable only when Datasette runs without the plugins dir. The map (`web/index.html` + `web/app.js`, MapLibre, no API key) fetches `/malaria/country_current.json` and the Natural Earth polygons in `web/world.geojson`, joins on ISO3, and opens a per-country detail panel fetched from `v_malaria_current`. Overseas territories with their own CDC entry (e.g. French Guiana) have ISO3 in the data but no separate 110m polygon, so they appear in the data but not as a distinct map fill.
 
 ## Conventions
 
