@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "Tracks malaria endemic-region data for blood-donor geographic deferral, built from CDC/FDA primary sources."
 requires-python = ">=3.12"
 dependencies = [
-    "httpx>=0.27",
+    "httpx>=0.28.1",
     "selectolax>=1.0.2",
-    "pydantic>=2.7",
-    "zstandard>=0.22",
+    "pydantic>=2.14.2",
+    "zstandard>=0.25.0",
     # Datasette 1.0 moves facets, canned queries and plugin settings out of the
     # metadata.yaml served with -m, so lifting this cap means migrating that file.
     "datasette>=0.65.5,<1.0",
@@ -17,8 +17,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest>=8",
-    "ruff>=0.6",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
 ]
 
 [build-system]
