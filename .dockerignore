@@ -17,3 +17,4 @@ data/raw/
 data/geocode_cache.sqlite*
 data/*.db-wal
 data/*.db-shm
+.railway/

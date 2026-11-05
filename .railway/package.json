@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Railway IaC SDK for evaluating railway.ts with `railway config plan` / `apply`.",
+  "type": "module",
+  "dependencies": {
+    "railway": "3.16.0"
+  }
+}

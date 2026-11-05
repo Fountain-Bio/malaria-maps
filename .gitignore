@@ -9,3 +9,5 @@ _quarantine/
 .DS_Store
 .env
 data/geocode_cache.sqlite*
+node_modules/
+.railway/.cac-migration.json

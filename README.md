@@ -133,8 +133,11 @@ removals, and as-of queries.
 The serving side is packaged as a baked, read-only image. `data/malaria.db` is copied into
 the image and opened immutable (`-i`), so each deploy is a fixed snapshot that a CDN can cache
 hard. `Dockerfile` installs deps with uv and runs Datasette against that immutable DB with the
-`web/` static mount and the local plugins dir. `railway.toml` selects the Dockerfile builder
-and health-checks `/-/versions.json` (a cheap 200). It runs a single replica.
+`web/` static mount and the local plugins dir. `.railway/railway.ts` (Railway Infrastructure
+as Code) selects the Dockerfile builder, health-checks `/-/versions.json` (a cheap 200), runs a
+single replica, and mounts the geocode-cache volume at `/app/var`. To change it, run
+`npm install` in `.railway/`, then `railway config plan` and `railway config apply` from a
+checkout linked to the "malaria maps" project. Service variables stay outside that file.
 
 Caching is designed so no cache purge is ever required, which matters because intermediate
 caches between the CDN and the browser can't be purged:

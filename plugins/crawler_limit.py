@@ -11,7 +11,7 @@ are not matched and never limited. robots.txt and sitemap.xml are always served,
 throttled crawler can still read the rules.
 
 The count lives in process memory. That is enough for the single replica this service
-runs (railway.toml). Only requests the CDN misses reach the app, so only those count.
+runs (.railway/railway.ts). Only requests the CDN misses reach the app, so only those count.
 """
 
 import os
