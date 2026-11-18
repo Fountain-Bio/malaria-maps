@@ -6,11 +6,11 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
     "selectolax>=1.0.2",
-    "pydantic>=2.14.2",
+    "pydantic>=2.14.3",
     "zstandard>=0.25.0",
     # Datasette 1.0 moves facets, canned queries and plugin settings out of the
     # metadata.yaml served with -m, so lifting this cap means migrating that file.
-    "datasette>=0.65.5,<1.0",
+    "datasette>=0.65.6,<1.0",
     "datasette-render-html>=1.0",
     "datasette-gzip>=0.3",
 ]
@@ -18,7 +18,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.2.0",
-    "ruff>=0.17.3",
+    "ruff>=0.17.5",
 ]
 
 [build-system]
